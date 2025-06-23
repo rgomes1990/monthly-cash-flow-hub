@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Plus, Calendar, TrendingUp, TrendingDown, DollarSign, Building2 } from 'lucide-react';
+import { Plus, Calendar, TrendingUp, TrendingDown, DollarSign, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -12,12 +12,12 @@ import ExpenseChart from '@/components/ExpenseChart';
 import MonthNavigator from '@/components/MonthNavigator';
 import { useExpenses } from '@/hooks/useExpenses';
 
-const Index = () => {
+const Company = () => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [showExpenseForm, setShowExpenseForm] = useState(false);
   const [activeTab, setActiveTab] = useState('dashboard');
   
-  const { expenses, loading, addExpense, updateExpense, deleteExpense } = useExpenses('personal');
+  const { expenses, loading, addExpense, updateExpense, deleteExpense } = useExpenses('company');
 
   const currentMonthKey = `${currentMonth.getFullYear()}-${currentMonth.getMonth()}`;
   
@@ -64,20 +64,20 @@ const Index = () => {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
           <div>
             <h1 className="text-4xl font-bold text-gray-900 mb-2">
-              Controle de Despesas Pessoais
+              Controle de Despesas da Empresa
             </h1>
             <p className="text-gray-600">
-              Gerencie suas finanças pessoais de forma inteligente
+              Gerencie as finanças empresariais de forma inteligente
             </p>
           </div>
           <div className="flex gap-3">
             <Button 
-              onClick={() => window.location.href = '/company'}
+              onClick={() => window.location.href = '/'}
               variant="outline"
               className="bg-white border-2 border-blue-600 text-blue-600 hover:bg-blue-50"
             >
-              <Building2 className="w-4 h-4 mr-2" />
-              Despesas da Empresa
+              <User className="w-4 h-4 mr-2" />
+              Despesas Pessoais
             </Button>
             <Button 
               onClick={() => setShowExpenseForm(true)}
@@ -209,4 +209,4 @@ const Index = () => {
   );
 };
 
-export default Index;
+export default Company;

@@ -1,11 +1,221 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+
+import React, { useState, useEffect } from 'react';
+import { Plus, Calendar, TrendingUp, TrendingDown, DollarSign } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import ExpenseForm from '@/components/ExpenseForm';
+import MonthlyExpenses from '@/components/MonthlyExpenses';
+import InstallmentExpenses from '@/components/InstallmentExpenses';
+import CasualExpenses from '@/components/CasualExpenses';
+import ExpenseChart from '@/components/ExpenseChart';
+import MonthNavigator from '@/components/MonthNavigator';
+
+interface Expense {
+  id: string;
+  title: string;
+  amount: number;
+  category: string;
+  type: 'monthly' | 'installment' | 'casual';
+  date: string;
+  installments?: {
+    total: number;
+    current: number;
+  };
+}
 
 const Index = () => {
+  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [showExpenseForm, setShowExpenseForm] = useState(false);
+  const [activeTab, setActiveTab] = useState('dashboard');
+
+  // Load expenses from localStorage
+  useEffect(() => {
+    const savedExpenses = localStorage.getItem('expenses');
+    if (savedExpenses) {
+      setExpenses(JSON.parse(savedExpenses));
+    }
+  }, []);
+
+  // Save expenses to localStorage
+  useEffect(() => {
+    localStorage.setItem('expenses', JSON.stringify(expenses));
+  }, [expenses]);
+
+  const currentMonthKey = `${currentMonth.getFullYear()}-${currentMonth.getMonth()}`;
+  
+  const currentMonthExpenses = expenses.filter(expense => {
+    const expenseDate = new Date(expense.date);
+    return expenseDate.getFullYear() === currentMonth.getFullYear() && 
+           expenseDate.getMonth() === currentMonth.getMonth();
+  });
+
+  const monthlyExpenses = currentMonthExpenses.filter(e => e.type === 'monthly');
+  const installmentExpenses = currentMonthExpenses.filter(e => e.type === 'installment');
+  const casualExpenses = currentMonthExpenses.filter(e => e.type === 'casual');
+
+  const totalMonthly = monthlyExpenses.reduce((sum, e) => sum + e.amount, 0);
+  const totalInstallment = installmentExpenses.reduce((sum, e) => sum + e.amount, 0);
+  const totalCasual = casualExpenses.reduce((sum, e) => sum + e.amount, 0);
+  const totalExpenses = totalMonthly + totalInstallment + totalCasual;
+
+  const addExpense = (expense: Omit<Expense, 'id'>) => {
+    const newExpense = {
+      ...expense,
+      id: Date.now().toString(),
+    };
+    setExpenses(prev => [...prev, newExpense]);
+    setShowExpenseForm(false);
+  };
+
+  const updateExpense = (id: string, updatedExpense: Partial<Expense>) => {
+    setExpenses(prev => prev.map(expense => 
+      expense.id === id ? { ...expense, ...updatedExpense } : expense
+    ));
+  };
+
+  const deleteExpense = (id: string) => {
+    setExpenses(prev => prev.filter(expense => expense.id !== id));
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      <div className="container mx-auto p-4 max-w-7xl">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+          <div>
+            <h1 className="text-4xl font-bold text-gray-900 mb-2">
+              Controle de Despesas
+            </h1>
+            <p className="text-gray-600">
+              Gerencie suas finanças pessoais de forma inteligente
+            </p>
+          </div>
+          <Button 
+            onClick={() => setShowExpenseForm(true)}
+            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg transition-all duration-300 hover:shadow-xl"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Nova Despesa
+          </Button>
+        </div>
+
+        {/* Month Navigator */}
+        <MonthNavigator 
+          currentMonth={currentMonth}
+          onMonthChange={setCurrentMonth}
+        />
+
+        {/* Summary Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <Card className="bg-white shadow-lg hover:shadow-xl transition-shadow duration-300">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600">
+                Total do Mês
+              </CardTitle>
+              <DollarSign className="h-4 w-4 text-blue-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-gray-900">
+                R$ {totalExpenses.toFixed(2)}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white shadow-lg hover:shadow-xl transition-shadow duration-300">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600">
+                Despesas Fixas
+              </CardTitle>
+              <Calendar className="h-4 w-4 text-green-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-gray-900">
+                R$ {totalMonthly.toFixed(2)}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white shadow-lg hover:shadow-xl transition-shadow duration-300">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600">
+                Parceladas
+              </CardTitle>
+              <TrendingUp className="h-4 w-4 text-orange-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-gray-900">
+                R$ {totalInstallment.toFixed(2)}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white shadow-lg hover:shadow-xl transition-shadow duration-300">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600">
+                Despesas Avulsas
+              </CardTitle>
+              <TrendingDown className="h-4 w-4 text-purple-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-gray-900">
+                R$ {totalCasual.toFixed(2)}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Main Content */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-4 mb-8">
+            <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+            <TabsTrigger value="monthly">Fixas</TabsTrigger>
+            <TabsTrigger value="installment">Parceladas</TabsTrigger>
+            <TabsTrigger value="casual">Avulsas</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="dashboard" className="space-y-6">
+            <ExpenseChart 
+              monthlyTotal={totalMonthly}
+              installmentTotal={totalInstallment}
+              casualTotal={totalCasual}
+            />
+          </TabsContent>
+
+          <TabsContent value="monthly">
+            <MonthlyExpenses 
+              expenses={monthlyExpenses}
+              onUpdate={updateExpense}
+              onDelete={deleteExpense}
+            />
+          </TabsContent>
+
+          <TabsContent value="installment">
+            <InstallmentExpenses 
+              expenses={installmentExpenses}
+              onUpdate={updateExpense}
+              onDelete={deleteExpense}
+            />
+          </TabsContent>
+
+          <TabsContent value="casual">
+            <CasualExpenses 
+              expenses={casualExpenses}
+              onUpdate={updateExpense}
+              onDelete={deleteExpense}
+            />
+          </TabsContent>
+        </Tabs>
+
+        {/* Expense Form Modal */}
+        {showExpenseForm && (
+          <ExpenseForm 
+            onSave={addExpense}
+            onCancel={() => setShowExpenseForm(false)}
+            currentMonth={currentMonth}
+          />
+        )}
       </div>
     </div>
   );

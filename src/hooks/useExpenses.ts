@@ -2,6 +2,10 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { Database } from '@/integrations/supabase/types';
+
+type ExpenseRow = Database['public']['Tables']['expenses']['Row'];
+type ExpenseInsert = Database['public']['Tables']['expenses']['Insert'];
 
 export interface Expense {
   id: string;
@@ -17,6 +21,20 @@ export interface Expense {
   installment_current?: number;
 }
 
+const mapExpenseRowToExpense = (row: ExpenseRow): Expense => ({
+  id: row.id,
+  title: row.title,
+  amount: row.amount,
+  category: row.category,
+  type: row.type as 'monthly' | 'installment' | 'casual',
+  expense_category: row.expense_category as 'personal' | 'company',
+  date: row.date,
+  description: row.description || undefined,
+  paid: row.paid || false,
+  installment_total: row.installment_total || undefined,
+  installment_current: row.installment_current || undefined,
+});
+
 export const useExpenses = (expenseCategory: 'personal' | 'company') => {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
@@ -31,7 +49,8 @@ export const useExpenses = (expenseCategory: 'personal' | 'company') => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setExpenses(data || []);
+      const mappedExpenses = (data || []).map(mapExpenseRowToExpense);
+      setExpenses(mappedExpenses);
     } catch (error) {
       console.error('Erro ao buscar despesas:', error);
       toast({
@@ -46,11 +65,17 @@ export const useExpenses = (expenseCategory: 'personal' | 'company') => {
 
   const addExpense = async (expense: Omit<Expense, 'id'>) => {
     try {
-      const expenseData = {
-        ...expense,
+      const expenseData: ExpenseInsert = {
+        title: expense.title,
+        amount: expense.amount,
+        category: expense.category,
+        type: expense.type,
         expense_category: expenseCategory,
-        installment_total: expense.type === 'installment' ? expense.installment_total : null,
-        installment_current: expense.type === 'installment' ? expense.installment_current : null,
+        date: expense.date,
+        description: expense.description || null,
+        paid: expense.paid || false,
+        installment_total: expense.type === 'installment' ? expense.installment_total || null : null,
+        installment_current: expense.type === 'installment' ? expense.installment_current || null : null,
       };
 
       const { data, error } = await supabase
@@ -61,7 +86,8 @@ export const useExpenses = (expenseCategory: 'personal' | 'company') => {
 
       if (error) throw error;
       
-      setExpenses(prev => [data, ...prev]);
+      const mappedExpense = mapExpenseRowToExpense(data);
+      setExpenses(prev => [mappedExpense, ...prev]);
       toast({
         title: "Sucesso",
         description: "Despesa adicionada com sucesso!",

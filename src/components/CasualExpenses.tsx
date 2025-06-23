@@ -4,6 +4,8 @@ import { ShoppingCart, Edit, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 
 interface Expense {
   id: string;
@@ -13,6 +15,7 @@ interface Expense {
   type: 'monthly' | 'installment' | 'casual';
   date: string;
   description?: string;
+  paid?: boolean;
 }
 
 interface CasualExpensesProps {
@@ -38,6 +41,10 @@ const CasualExpenses: React.FC<CasualExpensesProps> = ({ expenses, onUpdate, onD
   };
 
   const totalCasual = expenses.reduce((sum, expense) => sum + expense.amount, 0);
+
+  const handlePaidToggle = (id: string, paid: boolean) => {
+    onUpdate(id, { paid });
+  };
 
   return (
     <div className="space-y-6">
@@ -73,20 +80,25 @@ const CasualExpenses: React.FC<CasualExpensesProps> = ({ expenses, onUpdate, onD
       ) : (
         <div className="grid gap-4">
           {expenses.map((expense) => (
-            <Card key={expense.id} className="hover:shadow-lg transition-shadow duration-300">
+            <Card key={expense.id} className={`hover:shadow-lg transition-shadow duration-300 ${expense.paid ? 'bg-green-50 border-green-200' : ''}`}>
               <CardContent className="p-6">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
-                      <h3 className="text-lg font-semibold text-gray-900">
+                      <h3 className={`text-lg font-semibold ${expense.paid ? 'text-green-700 line-through' : 'text-gray-900'}`}>
                         {expense.title}
                       </h3>
                       <Badge className={getCategoryColor(expense.category)}>
                         {expense.category}
                       </Badge>
+                      {expense.paid && (
+                        <Badge className="bg-green-100 text-green-800">
+                          Pago
+                        </Badge>
+                      )}
                     </div>
                     
-                    <div className="text-2xl font-bold text-purple-600 mb-2">
+                    <div className={`text-2xl font-bold mb-2 ${expense.paid ? 'text-green-600' : 'text-purple-600'}`}>
                       R$ {expense.amount.toFixed(2)}
                     </div>
                     
@@ -97,24 +109,37 @@ const CasualExpenses: React.FC<CasualExpensesProps> = ({ expenses, onUpdate, onD
                     )}
                   </div>
                   
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        // Implementar edição
-                      }}
-                    >
-                      <Edit className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => onDelete(expense.id)}
-                      className="text-red-600 hover:text-red-700"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+                  <div className="flex flex-col gap-3">
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        id={`paid-${expense.id}`}
+                        checked={expense.paid || false}
+                        onCheckedChange={(checked) => handlePaidToggle(expense.id, checked)}
+                      />
+                      <Label htmlFor={`paid-${expense.id}`} className="text-sm">
+                        Pago
+                      </Label>
+                    </div>
+                    
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          // Implementar edição
+                        }}
+                      >
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => onDelete(expense.id)}
+                        className="text-red-600 hover:text-red-700"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </CardContent>

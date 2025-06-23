@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
-import { Plus, Calendar, TrendingUp, TrendingDown, DollarSign } from 'lucide-react';
+import { Plus, Calendar, TrendingUp, TrendingDown, DollarSign, Building2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -18,6 +17,7 @@ interface Expense {
   category: string;
   type: 'monthly' | 'installment' | 'casual';
   date: string;
+  paid?: boolean;
   installments?: {
     total: number;
     current: number;
@@ -86,19 +86,29 @@ const Index = () => {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
           <div>
             <h1 className="text-4xl font-bold text-gray-900 mb-2">
-              Controle de Despesas
+              Controle de Despesas Pessoais
             </h1>
             <p className="text-gray-600">
               Gerencie suas finanças pessoais de forma inteligente
             </p>
           </div>
-          <Button 
-            onClick={() => setShowExpenseForm(true)}
-            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg transition-all duration-300 hover:shadow-xl"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Nova Despesa
-          </Button>
+          <div className="flex gap-3">
+            <Button 
+              onClick={() => window.location.href = '/empresa'}
+              variant="outline"
+              className="bg-white border-2 border-blue-600 text-blue-600 hover:bg-blue-50"
+            >
+              <Building2 className="w-4 h-4 mr-2" />
+              Despesas da Empresa
+            </Button>
+            <Button 
+              onClick={() => setShowExpenseForm(true)}
+              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg transition-all duration-300 hover:shadow-xl"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Nova Despesa
+            </Button>
+          </div>
         </div>
 
         {/* Month Navigator */}

@@ -1,9 +1,11 @@
 
 import React, { useState } from 'react';
-import { Plus, Calendar, TrendingUp, TrendingDown, DollarSign, Building2 } from 'lucide-react';
+import { Plus, Calendar, TrendingUp, TrendingDown, DollarSign } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
 import ExpenseForm from '@/components/ExpenseForm';
 import MonthlyExpenses from '@/components/MonthlyExpenses';
 import InstallmentExpenses from '@/components/InstallmentExpenses';
@@ -16,11 +18,10 @@ const Index = () => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [showExpenseForm, setShowExpenseForm] = useState(false);
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [expenseFilter, setExpenseFilter] = useState<'personal' | 'company'>('personal');
   
-  const { expenses, loading, addExpense, updateExpense, deleteExpense } = useExpenses('personal');
+  const { expenses, loading, addExpense, updateExpense, deleteExpense } = useExpenses(expenseFilter);
 
-  const currentMonthKey = `${currentMonth.getFullYear()}-${currentMonth.getMonth()}`;
-  
   const currentMonthExpenses = expenses.filter(expense => {
     const expenseDate = new Date(expense.date);
     return expenseDate.getFullYear() === currentMonth.getFullYear() && 
@@ -39,10 +40,6 @@ const Index = () => {
   const handleAddExpense = (expense: any) => {
     addExpense({
       ...expense,
-      installments: expense.installments ? {
-        total: expense.installments.total,
-        current: expense.installments.current,
-      } : undefined,
       installment_total: expense.installments?.total,
       installment_current: expense.installments?.current,
     });
@@ -64,30 +61,43 @@ const Index = () => {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
           <div>
             <h1 className="text-4xl font-bold text-gray-900 mb-2">
-              Controle de Despesas Pessoais
+              Controle de Despesas
             </h1>
             <p className="text-gray-600">
-              Gerencie suas finanças pessoais de forma inteligente
+              Gerencie suas finanças de forma inteligente
             </p>
           </div>
-          <div className="flex gap-3">
-            <Button 
-              onClick={() => window.location.href = '/company'}
-              variant="outline"
-              className="bg-white border-2 border-blue-600 text-blue-600 hover:bg-blue-50"
-            >
-              <Building2 className="w-4 h-4 mr-2" />
-              Despesas da Empresa
-            </Button>
-            <Button 
-              onClick={() => setShowExpenseForm(true)}
-              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg transition-all duration-300 hover:shadow-xl"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Nova Despesa
-            </Button>
-          </div>
+          <Button 
+            onClick={() => setShowExpenseForm(true)}
+            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg transition-all duration-300 hover:shadow-xl"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Nova Despesa
+          </Button>
         </div>
+
+        {/* Expense Filter */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="text-lg">Filtrar Despesas</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <RadioGroup 
+              value={expenseFilter} 
+              onValueChange={(value: 'personal' | 'company') => setExpenseFilter(value)}
+              className="flex gap-8"
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="personal" id="filter-personal" />
+                <Label htmlFor="filter-personal" className="text-base">Despesas Pessoais</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="company" id="filter-company" />
+                <Label htmlFor="filter-company" className="text-base">Despesas da Empresa</Label>
+              </div>
+            </RadioGroup>
+          </CardContent>
+        </Card>
 
         {/* Month Navigator */}
         <MonthNavigator 
@@ -108,6 +118,9 @@ const Index = () => {
               <div className="text-2xl font-bold text-gray-900">
                 R$ {totalExpenses.toFixed(2)}
               </div>
+              <p className="text-xs text-gray-500 mt-1">
+                {expenseFilter === 'personal' ? 'Despesas Pessoais' : 'Despesas da Empresa'}
+              </p>
             </CardContent>
           </Card>
 

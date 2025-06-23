@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 interface ExpenseFormProps {
   onSave: (expense: {
@@ -14,6 +15,7 @@ interface ExpenseFormProps {
     amount: number;
     category: string;
     type: 'monthly' | 'installment' | 'casual';
+    expense_category: 'personal' | 'company';
     date: string;
     installments?: {
       total: number;
@@ -31,6 +33,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSave, onCancel, currentMont
     amount: '',
     category: '',
     type: 'casual' as 'monthly' | 'installment' | 'casual',
+    expense_category: 'personal' as 'personal' | 'company',
     description: '',
     installmentTotal: '',
     installmentCurrent: '1',
@@ -56,6 +59,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSave, onCancel, currentMont
       amount: parseFloat(formData.amount),
       category: formData.category,
       type: formData.type,
+      expense_category: formData.expense_category,
       date: currentMonth.toISOString(),
       description: formData.description,
       ...(formData.type === 'installment' && {
@@ -81,6 +85,26 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSave, onCancel, currentMont
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
+              <Label>Tipo de Despesa *</Label>
+              <RadioGroup 
+                value={formData.expense_category} 
+                onValueChange={(value: 'personal' | 'company') => 
+                  setFormData({ ...formData, expense_category: value })
+                }
+                className="flex gap-6 mt-2"
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="personal" id="personal" />
+                  <Label htmlFor="personal">Pessoal</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="company" id="company" />
+                  <Label htmlFor="company">Empresa</Label>
+                </div>
+              </RadioGroup>
+            </div>
+
+            <div>
               <Label htmlFor="title">Título *</Label>
               <Input
                 id="title"
@@ -105,7 +129,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSave, onCancel, currentMont
             </div>
 
             <div>
-              <Label htmlFor="type">Tipo de Despesa *</Label>
+              <Label htmlFor="type">Tipo de Recorrência *</Label>
               <Select 
                 value={formData.type} 
                 onValueChange={(value: 'monthly' | 'installment' | 'casual') => 

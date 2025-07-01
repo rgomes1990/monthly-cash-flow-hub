@@ -11,7 +11,7 @@ import MonthlyExpenses from '@/components/MonthlyExpenses';
 import InstallmentExpenses from '@/components/InstallmentExpenses';
 import CasualExpenses from '@/components/CasualExpenses';
 import ExpenseChart from '@/components/ExpenseChart';
-import MonthNavigator from '@/components/MonthNavigator';
+import MonthNavigator from '@/components/MonthNavigatorEnhanced';
 import { useExpenses } from '@/hooks/useExpenses';
 
 const Index = () => {
@@ -42,6 +42,7 @@ const Index = () => {
       ...expense,
       installment_total: expense.installments?.total,
       installment_current: expense.installments?.current,
+      recurring_day: expense.recurring_day,
     });
     setShowExpenseForm(false);
   };

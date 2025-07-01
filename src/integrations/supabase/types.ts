@@ -20,7 +20,10 @@ export type Database = {
           id: string
           installment_current: number | null
           installment_total: number | null
+          is_recurring: boolean | null
           paid: boolean | null
+          parent_expense_id: string | null
+          recurring_day: number | null
           title: string
           type: string
           updated_at: string
@@ -35,7 +38,10 @@ export type Database = {
           id?: string
           installment_current?: number | null
           installment_total?: number | null
+          is_recurring?: boolean | null
           paid?: boolean | null
+          parent_expense_id?: string | null
+          recurring_day?: number | null
           title: string
           type: string
           updated_at?: string
@@ -50,19 +56,33 @@ export type Database = {
           id?: string
           installment_current?: number | null
           installment_total?: number | null
+          is_recurring?: boolean | null
           paid?: boolean | null
+          parent_expense_id?: string | null
+          recurring_day?: number | null
           title?: string
           type?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "expenses_parent_expense_id_fkey"
+            columns: ["parent_expense_id"]
+            isOneToOne: false
+            referencedRelation: "expenses"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      create_monthly_expenses: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

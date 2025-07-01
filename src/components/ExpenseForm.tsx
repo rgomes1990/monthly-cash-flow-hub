@@ -22,6 +22,7 @@ interface ExpenseFormProps {
       current: number;
     };
     description?: string;
+    recurring_day?: number;
   }) => void;
   onCancel: () => void;
   currentMonth: Date;
@@ -37,6 +38,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSave, onCancel, currentMont
     description: '',
     installmentTotal: '',
     installmentCurrent: '1',
+    recurringDay: '',
   });
 
   const categories = [
@@ -67,6 +69,9 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSave, onCancel, currentMont
           total: parseInt(formData.installmentTotal),
           current: parseInt(formData.installmentCurrent),
         }
+      }),
+      ...(formData.type === 'monthly' && formData.recurringDay && {
+        recurring_day: parseInt(formData.recurringDay)
       })
     };
 
@@ -146,6 +151,24 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onSave, onCancel, currentMont
                 </SelectContent>
               </Select>
             </div>
+
+            {formData.type === 'monthly' && (
+              <div>
+                <Label htmlFor="recurringDay">Dia da Recorrência</Label>
+                <Input
+                  id="recurringDay"
+                  type="number"
+                  min="1"
+                  max="31"
+                  value={formData.recurringDay}
+                  onChange={(e) => setFormData({ ...formData, recurringDay: e.target.value })}
+                  placeholder="Ex: 15 (para todo dia 15)"
+                />
+                <p className="text-sm text-gray-500 mt-1">
+                  Opcional: especifique o dia do mês para a recorrência
+                </p>
+              </div>
+            )}
 
             {formData.type === 'installment' && (
               <div className="grid grid-cols-2 gap-4">

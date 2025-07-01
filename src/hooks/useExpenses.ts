@@ -19,6 +19,9 @@ export interface Expense {
   paid?: boolean;
   installment_total?: number;
   installment_current?: number;
+  is_recurring?: boolean;
+  parent_expense_id?: string;
+  recurring_day?: number;
 }
 
 const mapExpenseRowToExpense = (row: ExpenseRow): Expense => ({
@@ -33,6 +36,9 @@ const mapExpenseRowToExpense = (row: ExpenseRow): Expense => ({
   paid: row.paid || false,
   installment_total: row.installment_total || undefined,
   installment_current: row.installment_current || undefined,
+  is_recurring: row.is_recurring || false,
+  parent_expense_id: row.parent_expense_id || undefined,
+  recurring_day: row.recurring_day || undefined,
 });
 
 export const useExpenses = (expenseCategory: 'personal' | 'company') => {
@@ -76,6 +82,9 @@ export const useExpenses = (expenseCategory: 'personal' | 'company') => {
         paid: expense.paid || false,
         installment_total: expense.type === 'installment' ? expense.installment_total || null : null,
         installment_current: expense.type === 'installment' ? expense.installment_current || null : null,
+        is_recurring: expense.type === 'monthly' ? true : false,
+        parent_expense_id: null,
+        recurring_day: expense.recurring_day || null,
       };
 
       const { data, error } = await supabase
@@ -88,6 +97,12 @@ export const useExpenses = (expenseCategory: 'personal' | 'company') => {
       
       const mappedExpense = mapExpenseRowToExpense(data);
       setExpenses(prev => [mappedExpense, ...prev]);
+      
+      // Se é uma despesa mensal, criar automaticamente para os próximos meses
+      if (expense.type === 'monthly') {
+        await createRecurringExpenses(data.id);
+      }
+      
       toast({
         title: "Sucesso",
         description: "Despesa adicionada com sucesso!",
@@ -99,6 +114,19 @@ export const useExpenses = (expenseCategory: 'personal' | 'company') => {
         description: "Não foi possível adicionar a despesa",
         variant: "destructive",
       });
+    }
+  };
+
+  const createRecurringExpenses = async (parentId: string) => {
+    try {
+      // Chamar a função do banco para criar despesas recorrentes
+      const { error } = await supabase.rpc('create_monthly_expenses');
+      if (error) throw error;
+      
+      // Recarregar as despesas para mostrar as novas criadas
+      await fetchExpenses();
+    } catch (error) {
+      console.error('Erro ao criar despesas recorrentes:', error);
     }
   };
 

@@ -100,7 +100,7 @@ export const useExpenses = (expenseCategory: 'personal' | 'company') => {
       
       // Se é uma despesa mensal, criar automaticamente para os próximos meses
       if (expense.type === 'monthly') {
-        await createRecurringExpenses(data.id);
+        await createRecurringExpenses();
       }
       
       toast({
@@ -117,10 +117,10 @@ export const useExpenses = (expenseCategory: 'personal' | 'company') => {
     }
   };
 
-  const createRecurringExpenses = async (parentId: string) => {
+  const createRecurringExpenses = async () => {
     try {
-      // Chamar a função do banco para criar despesas recorrentes
-      const { error } = await supabase.rpc('create_monthly_expenses');
+      // Chamar a função melhorada do banco para criar despesas recorrentes
+      const { error } = await supabase.rpc('mark_existing_monthly_as_recurring');
       if (error) throw error;
       
       // Recarregar as despesas para mostrar as novas criadas

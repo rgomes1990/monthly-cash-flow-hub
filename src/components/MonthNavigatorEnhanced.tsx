@@ -1,9 +1,9 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { ensureMonthlyExpensesExist } from '@/utils/recurringExpenses';
+import { ensureMonthlyExpensesExist, processExistingExpenses } from '@/utils/recurringExpenses';
 
 interface MonthNavigatorProps {
   currentMonth: Date;
@@ -15,6 +15,14 @@ const MonthNavigator: React.FC<MonthNavigatorProps> = ({ currentMonth, onMonthCh
     'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
     'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
   ];
+
+  // Processar despesas existentes na primeira vez que o componente é montado
+  useEffect(() => {
+    const processOnMount = async () => {
+      await processExistingExpenses();
+    };
+    processOnMount();
+  }, []);
 
   const handleMonthChange = async (direction: 'prev' | 'next') => {
     const newDate = new Date(currentMonth);

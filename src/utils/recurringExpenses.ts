@@ -5,49 +5,64 @@ export const createMonthlyExpenses = async () => {
   try {
     const { error } = await supabase.rpc('create_monthly_expenses');
     if (error) throw error;
-    console.log('Despesas mensais criadas automaticamente');
+    console.log('Despesas mensais criadas automaticamente via RPC');
   } catch (error) {
     console.error('Erro ao criar despesas mensais automaticamente:', error);
   }
 };
 
-// Função para marcar despesas existentes como recorrentes
+// Função para marcar despesas existentes como recorrentes e criar futuras
 export const markExistingMonthlyAsRecurring = async () => {
   try {
     console.log('Iniciando processo de marcação de despesas existentes como recorrentes...');
     
-    // Primeiro, buscar todas as despesas mensais que ainda não são recorrentes
-    const { data: existingMonthlyExpenses, error: fetchError } = await supabase
+    // Buscar TODAS as despesas mensais, independente do status de recorrência
+    const { data: allMonthlyExpenses, error: fetchError } = await supabase
       .from('expenses')
       .select('*')
-      .eq('type', 'monthly')
-      .is('parent_expense_id', null)
-      .or('is_recurring.is.null,is_recurring.eq.false');
+      .eq('type', 'monthly');
     
     if (fetchError) throw fetchError;
     
-    console.log(`Encontradas ${existingMonthlyExpenses?.length || 0} despesas mensais para processar`);
+    console.log(`Total de despesas mensais encontradas: ${allMonthlyExpenses?.length || 0}`);
     
-    if (existingMonthlyExpenses && existingMonthlyExpenses.length > 0) {
-      // Marcar todas as despesas mensais existentes como recorrentes
-      const { error: updateError } = await supabase
-        .from('expenses')
-        .update({ is_recurring: true })
-        .eq('type', 'monthly')
-        .is('parent_expense_id', null)
-        .or('is_recurring.is.null,is_recurring.eq.false');
-      
-      if (updateError) throw updateError;
-      console.log('Despesas mensais marcadas como recorrentes');
-      
-      // Aguardar um pouco para garantir que a atualização foi processada
-      await new Promise(resolve => setTimeout(resolve, 1000));
+    if (!allMonthlyExpenses || allMonthlyExpenses.length === 0) {
+      console.log('Nenhuma despesa mensal encontrada no sistema');
+      return;
     }
     
-    // Depois criar as despesas futuras
+    // Filtrar despesas que são "pais" (não são filhas de outras despesas)
+    const parentExpenses = allMonthlyExpenses.filter(expense => !expense.parent_expense_id);
+    console.log(`Despesas mensais principais (não duplicadas): ${parentExpenses.length}`);
+    
+    // Separar despesas que ainda não são recorrentes
+    const nonRecurringExpenses = parentExpenses.filter(expense => !expense.is_recurring);
+    console.log(`Despesas mensais que precisam ser marcadas como recorrentes: ${nonRecurringExpenses.length}`);
+    
+    if (nonRecurringExpenses.length > 0) {
+      // Marcar todas as despesas mensais principais como recorrentes
+      for (const expense of nonRecurringExpenses) {
+        const { error: updateError } = await supabase
+          .from('expenses')
+          .update({ is_recurring: true })
+          .eq('id', expense.id);
+        
+        if (updateError) {
+          console.error(`Erro ao marcar despesa ${expense.title} como recorrente:`, updateError);
+        } else {
+          console.log(`Despesa "${expense.title}" marcada como recorrente`);
+        }
+      }
+      
+      // Aguardar para garantir que as atualizações foram processadas
+      await new Promise(resolve => setTimeout(resolve, 2000));
+    }
+    
+    // Agora criar as despesas futuras usando a função RPC
+    console.log('Criando despesas futuras...');
     await createMonthlyExpenses();
     
-    console.log('Despesas mensais existentes marcadas como recorrentes e futuras criadas');
+    console.log('Processo completo: despesas mensais marcadas como recorrentes e futuras criadas');
   } catch (error) {
     console.error('Erro ao processar despesas mensais existentes:', error);
   }
@@ -55,6 +70,7 @@ export const markExistingMonthlyAsRecurring = async () => {
 
 // Esta função pode ser chamada periodicamente ou quando o usuário navegar entre meses
 export const ensureMonthlyExpensesExist = async () => {
+  console.log('Garantindo que despesas mensais existam...');
   await createMonthlyExpenses();
 };
 
@@ -62,7 +78,7 @@ export const ensureMonthlyExpensesExist = async () => {
 export const processExistingExpenses = async () => {
   try {
     // Verificar se já processamos as despesas existentes
-    const processedKey = 'monthly_expenses_processed';
+    const processedKey = 'monthly_expenses_processed_v2'; // Mudei a versão para reprocessar
     const alreadyProcessed = localStorage.getItem(processedKey);
     
     if (!alreadyProcessed) {
@@ -80,6 +96,35 @@ export const processExistingExpenses = async () => {
 
 // Função para forçar reprocessamento (útil para debug)
 export const forceReprocessExistingExpenses = async () => {
-  localStorage.removeItem('monthly_expenses_processed');
+  localStorage.removeItem('monthly_expenses_processed_v2');
   await processExistingExpenses();
+};
+
+// Função adicional para debug - verificar despesas no banco
+export const debugExpenses = async () => {
+  try {
+    const { data: allExpenses, error } = await supabase
+      .from('expenses')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    if (error) throw error;
+    
+    console.log('=== DEBUG: Todas as despesas ===');
+    console.log(`Total de despesas: ${allExpenses?.length || 0}`);
+    
+    const monthlyExpenses = allExpenses?.filter(e => e.type === 'monthly') || [];
+    console.log(`Despesas mensais: ${monthlyExpenses.length}`);
+    
+    const recurringExpenses = monthlyExpenses.filter(e => e.is_recurring);
+    console.log(`Despesas recorrentes: ${recurringExpenses.length}`);
+    
+    const parentExpenses = monthlyExpenses.filter(e => !e.parent_expense_id);
+    console.log(`Despesas principais (pais): ${parentExpenses.length}`);
+    
+    console.log('Detalhes das despesas mensais:', monthlyExpenses);
+    
+  } catch (error) {
+    console.error('Erro ao fazer debug das despesas:', error);
+  }
 };

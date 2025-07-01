@@ -3,7 +3,7 @@ import React, { useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { ensureMonthlyExpensesExist, processExistingExpenses } from '@/utils/recurringExpenses';
+import { ensureMonthlyExpensesExist, processExistingExpenses, debugExpenses } from '@/utils/recurringExpenses';
 
 interface MonthNavigatorProps {
   currentMonth: Date;
@@ -19,7 +19,12 @@ const MonthNavigator: React.FC<MonthNavigatorProps> = ({ currentMonth, onMonthCh
   // Processar despesas existentes na primeira vez que o componente é montado
   useEffect(() => {
     const processOnMount = async () => {
-      console.log('MonthNavigator montado, processando despesas existentes...');
+      console.log('MonthNavigator montado, iniciando processamento...');
+      
+      // Primeiro fazer debug para ver o que temos no banco
+      await debugExpenses();
+      
+      // Depois processar as despesas existentes
       await processExistingExpenses();
     };
     processOnMount();

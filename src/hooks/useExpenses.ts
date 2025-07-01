@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -99,6 +100,7 @@ export const useExpenses = (expenseCategory: 'personal' | 'company') => {
       
       // Se é uma despesa mensal, criar automaticamente para os próximos meses
       if (expense.type === 'monthly') {
+        console.log('Nova despesa mensal criada, gerando para meses futuros...');
         await createRecurringExpenses();
       }
       
@@ -121,6 +123,8 @@ export const useExpenses = (expenseCategory: 'personal' | 'company') => {
       // Usar apenas a função create_monthly_expenses que está disponível nos tipos
       const { error } = await supabase.rpc('create_monthly_expenses');
       if (error) throw error;
+      
+      console.log('Despesas recorrentes criadas com sucesso');
       
       // Recarregar as despesas para mostrar as novas criadas
       await fetchExpenses();

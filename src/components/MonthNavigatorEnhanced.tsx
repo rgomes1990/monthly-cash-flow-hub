@@ -19,10 +19,11 @@ const MonthNavigator: React.FC<MonthNavigatorProps> = ({ currentMonth, onMonthCh
   // Processar despesas existentes na primeira vez que o componente é montado
   useEffect(() => {
     const processOnMount = async () => {
+      console.log('MonthNavigator montado, processando despesas existentes...');
       await processExistingExpenses();
     };
     processOnMount();
-  }, []);
+  }, []); // Array vazio para executar apenas uma vez
 
   const handleMonthChange = async (direction: 'prev' | 'next') => {
     const newDate = new Date(currentMonth);
@@ -35,6 +36,7 @@ const MonthNavigator: React.FC<MonthNavigatorProps> = ({ currentMonth, onMonthCh
     onMonthChange(newDate);
     
     // Criar despesas mensais automaticamente quando navegar
+    console.log('Navegando para novo mês, garantindo que despesas mensais existam...');
     await ensureMonthlyExpensesExist();
   };
 

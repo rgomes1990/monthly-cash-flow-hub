@@ -186,6 +186,155 @@ export const useExpenses = (expenseCategory: 'personal' | 'company') => {
     }
   };
 
+  const replicateMonthlyExpenseToFuture = async (expenseId: string) => {
+    try {
+      // Buscar a despesa original
+      const { data: originalExpense, error: fetchError } = await supabase
+        .from('expenses')
+        .select('*')
+        .eq('id', expenseId)
+        .single();
+
+      if (fetchError || !originalExpense) throw fetchError || new Error('Despesa not found');
+
+      const baseDate = new Date(originalExpense.date);
+      const currentDate = new Date();
+      
+      // Criar despesas para os próximos 12 meses a partir do mês atual
+      const futureExpenses = [];
+      
+      for (let i = 1; i <= 12; i++) {
+        const futureDate = new Date(currentDate);
+        futureDate.setMonth(futureDate.getMonth() + i);
+        
+        // Usar o mesmo dia da despesa original
+        if (originalExpense.recurring_day) {
+          futureDate.setDate(originalExpense.recurring_day);
+        } else {
+          futureDate.setDate(baseDate.getDate());
+        }
+
+        const expenseData: ExpenseInsert = {
+          title: originalExpense.title,
+          amount: originalExpense.amount,
+          category: originalExpense.category,
+          type: originalExpense.type,
+          expense_category: originalExpense.expense_category,
+          date: futureDate.toISOString().split('T')[0],
+          description: originalExpense.description,
+          paid: false,
+          installment_total: null,
+          installment_current: null,
+          is_recurring: false,
+          parent_expense_id: originalExpense.parent_expense_id || originalExpense.id,
+          recurring_day: originalExpense.recurring_day,
+        };
+
+        futureExpenses.push(expenseData);
+      }
+
+      if (futureExpenses.length > 0) {
+        const { error: insertError } = await supabase
+          .from('expenses')
+          .insert(futureExpenses);
+
+        if (insertError) throw insertError;
+        console.log(`${futureExpenses.length} despesas mensais replicadas para o futuro`);
+        
+        await fetchExpenses();
+        
+        toast({
+          title: "Sucesso",
+          description: `Despesa replicada para ${futureExpenses.length} meses futuros!`,
+        });
+      }
+    } catch (error) {
+      console.error('Erro ao replicar despesa mensal:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível replicar a despesa mensal",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const replicateInstallmentExpenseToFuture = async (expenseId: string) => {
+    try {
+      const { data: originalExpense, error: fetchError } = await supabase
+        .from('expenses')
+        .select('*')
+        .eq('id', expenseId)
+        .single();
+
+      if (fetchError || !originalExpense) throw fetchError || new Error('Despesa not found');
+
+      if (!originalExpense.installment_total || !originalExpense.installment_current) {
+        throw new Error('Dados de parcelamento inválidos');
+      }
+
+      const baseDate = new Date(originalExpense.date);
+      const remainingInstallments = originalExpense.installment_total - originalExpense.installment_current;
+      
+      if (remainingInstallments <= 0) {
+        toast({
+          title: "Aviso",
+          description: "Esta despesa parcelada já foi totalmente replicada",
+        });
+        return;
+      }
+
+      const futureExpenses = [];
+      
+      for (let i = 1; i <= remainingInstallments; i++) {
+        const futureDate = new Date(baseDate);
+        futureDate.setMonth(futureDate.getMonth() + i);
+
+        const currentInstallment = originalExpense.installment_current + i;
+
+        const expenseData: ExpenseInsert = {
+          title: `${originalExpense.title.replace(/ \(\d+\/\d+\)$/, '')} (${currentInstallment}/${originalExpense.installment_total})`,
+          amount: originalExpense.amount,
+          category: originalExpense.category,
+          type: originalExpense.type,
+          expense_category: originalExpense.expense_category,
+          date: futureDate.toISOString().split('T')[0],
+          description: originalExpense.description,
+          paid: false,
+          installment_total: originalExpense.installment_total,
+          installment_current: currentInstallment,
+          is_recurring: false,
+          parent_expense_id: originalExpense.parent_expense_id || originalExpense.id,
+          recurring_day: null,
+        };
+
+        futureExpenses.push(expenseData);
+      }
+
+      if (futureExpenses.length > 0) {
+        const { error: insertError } = await supabase
+          .from('expenses')
+          .insert(futureExpenses);
+
+        if (insertError) throw insertError;
+        console.log(`${futureExpenses.length} parcelas replicadas para o futuro`);
+        
+        await fetchExpenses();
+        
+        toast({
+          title: "Sucesso",
+          description: `${futureExpenses.length} parcelas replicadas para os meses futuros!`,
+        });
+      }
+    } catch (error) {
+      console.error('Erro ao replicar despesa parcelada:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível replicar a despesa parcelada",
+        variant: "destructive",
+      });
+    }
+  };
+
   const addExpense = async (expense: Omit<Expense, 'id'>) => {
     try {
       if (expense.type === 'monthly') {
@@ -265,12 +414,64 @@ export const useExpenses = (expenseCategory: 'personal' | 'company') => {
 
   const deleteExpense = async (id: string) => {
     try {
-      const { error } = await supabase
+      // Buscar a despesa para verificar se é monthly
+      const { data: expense, error: fetchError } = await supabase
         .from('expenses')
-        .delete()
-        .eq('id', id);
+        .select('*')
+        .eq('id', id)
+        .single();
 
-      if (error) throw error;
+      if (fetchError) throw fetchError;
+
+      if (expense.type === 'monthly') {
+        // Para despesas mensais, deletar também as futuras (não as passadas)
+        const currentDate = new Date();
+        const expenseDate = new Date(expense.date);
+        
+        if (expense.parent_expense_id) {
+          // Se é uma despesa filha, deletar ela e todas as futuras do mesmo parent
+          const { error: deleteError } = await supabase
+            .from('expenses')
+            .delete()
+            .eq('parent_expense_id', expense.parent_expense_id)
+            .gte('date', currentDate.toISOString().split('T')[0]);
+
+          if (deleteError) throw deleteError;
+
+          // Deletar a despesa atual também
+          const { error: deleteCurrentError } = await supabase
+            .from('expenses')
+            .delete()
+            .eq('id', id);
+
+          if (deleteCurrentError) throw deleteCurrentError;
+        } else {
+          // Se é uma despesa pai (template), deletar todas as despesas filhas futuras
+          const { error: deleteChildrenError } = await supabase
+            .from('expenses')
+            .delete()
+            .eq('parent_expense_id', id)
+            .gte('date', currentDate.toISOString().split('T')[0]);
+
+          if (deleteChildrenError) throw deleteChildrenError;
+
+          // Deletar a despesa principal
+          const { error: deleteParentError } = await supabase
+            .from('expenses')
+            .delete()
+            .eq('id', id);
+
+          if (deleteParentError) throw deleteParentError;
+        }
+      } else {
+        // Para outras despesas, deletar normalmente
+        const { error } = await supabase
+          .from('expenses')
+          .delete()
+          .eq('id', id);
+
+        if (error) throw error;
+      }
       
       setExpenses(prev => prev.filter(expense => expense.id !== id));
       toast({
@@ -297,6 +498,8 @@ export const useExpenses = (expenseCategory: 'personal' | 'company') => {
     addExpense,
     updateExpense,
     deleteExpense,
+    replicateMonthlyExpenseToFuture,
+    replicateInstallmentExpenseToFuture,
     refetch: fetchExpenses,
   };
 };

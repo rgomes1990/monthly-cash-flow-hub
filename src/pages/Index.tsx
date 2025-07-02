@@ -20,7 +20,15 @@ const Index = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [expenseFilter, setExpenseFilter] = useState<'personal' | 'company'>('personal');
   
-  const { expenses, loading, addExpense, updateExpense, deleteExpense } = useExpenses(expenseFilter);
+  const { 
+    expenses, 
+    loading, 
+    addExpense, 
+    updateExpense, 
+    deleteExpense, 
+    replicateMonthlyExpenseToFuture,
+    replicateInstallmentExpenseToFuture 
+  } = useExpenses(expenseFilter);
 
   const currentMonthExpenses = expenses.filter(expense => {
     const expenseDate = new Date(expense.date);
@@ -190,6 +198,7 @@ const Index = () => {
               expenses={monthlyExpenses}
               onUpdate={updateExpense}
               onDelete={deleteExpense}
+              onReplicateToFuture={replicateMonthlyExpenseToFuture}
             />
           </TabsContent>
 
@@ -198,6 +207,7 @@ const Index = () => {
               expenses={installmentExpenses}
               onUpdate={updateExpense}
               onDelete={deleteExpense}
+              onReplicateToFuture={replicateInstallmentExpenseToFuture}
             />
           </TabsContent>
 

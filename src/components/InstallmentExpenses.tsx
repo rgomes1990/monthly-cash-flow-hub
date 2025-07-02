@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { CreditCard, Edit, Trash2 } from 'lucide-react';
+import { CreditCard, Edit, Trash2, Copy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -13,9 +13,15 @@ interface InstallmentExpensesProps {
   expenses: Expense[];
   onUpdate: (id: string, expense: Partial<Expense>) => void;
   onDelete: (id: string) => void;
+  onReplicateToFuture?: (id: string) => void;
 }
 
-const InstallmentExpenses: React.FC<InstallmentExpensesProps> = ({ expenses, onUpdate, onDelete }) => {
+const InstallmentExpenses: React.FC<InstallmentExpensesProps> = ({ 
+  expenses, 
+  onUpdate, 
+  onDelete, 
+  onReplicateToFuture 
+}) => {
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
 
   const getCategoryColor = (category: string) => {
@@ -46,6 +52,12 @@ const InstallmentExpenses: React.FC<InstallmentExpensesProps> = ({ expenses, onU
   const handleSaveEdit = (id: string, updates: Partial<Expense>) => {
     onUpdate(id, updates);
     setEditingExpense(null);
+  };
+
+  const handleReplicateToFuture = (id: string) => {
+    if (onReplicateToFuture) {
+      onReplicateToFuture(id);
+    }
   };
 
   return (
@@ -136,6 +148,16 @@ const InstallmentExpenses: React.FC<InstallmentExpensesProps> = ({ expenses, onU
                       >
                         <Edit className="w-4 h-4" />
                       </Button>
+                      {onReplicateToFuture && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleReplicateToFuture(expense.id)}
+                          title="Replicar parcelas restantes para meses futuros"
+                        >
+                          <Copy className="w-4 h-4" />
+                        </Button>
+                      )}
                       <Button
                         variant="outline"
                         size="sm"

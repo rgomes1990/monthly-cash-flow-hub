@@ -7,21 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import ExpenseEditForm from '@/components/ExpenseEditForm';
-
-interface Expense {
-  id: string;
-  title: string;
-  amount: number;
-  category: string;
-  type: 'monthly' | 'installment' | 'casual';
-  date: string;
-  installments?: {
-    total: number;
-    current: number;
-  };
-  description?: string;
-  paid?: boolean;
-}
+import { Expense } from '@/hooks/useExpenses';
 
 interface InstallmentExpensesProps {
   expenses: Expense[];
@@ -107,9 +93,9 @@ const InstallmentExpenses: React.FC<InstallmentExpensesProps> = ({ expenses, onU
                       <Badge className={getCategoryColor(expense.category)}>
                         {expense.category}
                       </Badge>
-                      {expense.installments && (
+                      {expense.installment_total && expense.installment_current && (
                         <Badge variant="outline" className="text-orange-600 border-orange-600">
-                          {expense.installments.current}/{expense.installments.total}
+                          {expense.installment_current}/{expense.installment_total}
                         </Badge>
                       )}
                       {expense.paid && (

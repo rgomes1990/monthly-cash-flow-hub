@@ -7,17 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import ExpenseEditForm from '@/components/ExpenseEditForm';
-
-interface Expense {
-  id: string;
-  title: string;
-  amount: number;
-  category: string;
-  type: 'monthly' | 'installment' | 'casual';
-  date: string;
-  description?: string;
-  paid?: boolean;
-}
+import { Expense } from '@/hooks/useExpenses';
 
 interface MonthlyExpensesProps {
   expenses: Expense[];

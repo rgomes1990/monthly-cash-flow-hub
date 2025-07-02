@@ -1,9 +1,8 @@
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { ensureMonthlyExpensesExist, processExistingExpenses, debugExpenses } from '@/utils/recurringExpenses';
 
 interface MonthNavigatorProps {
   currentMonth: Date;
@@ -16,21 +15,7 @@ const MonthNavigator: React.FC<MonthNavigatorProps> = ({ currentMonth, onMonthCh
     'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
   ];
 
-  // Processar despesas existentes na primeira vez que o componente é montado
-  useEffect(() => {
-    const processOnMount = async () => {
-      console.log('MonthNavigator montado, iniciando processamento...');
-      
-      // Primeiro fazer debug para ver o que temos no banco
-      await debugExpenses();
-      
-      // Depois processar as despesas existentes
-      await processExistingExpenses();
-    };
-    processOnMount();
-  }, []); // Array vazio para executar apenas uma vez
-
-  const handleMonthChange = async (direction: 'prev' | 'next') => {
+  const handleMonthChange = (direction: 'prev' | 'next') => {
     const newDate = new Date(currentMonth);
     if (direction === 'prev') {
       newDate.setMonth(newDate.getMonth() - 1);
@@ -39,10 +24,6 @@ const MonthNavigator: React.FC<MonthNavigatorProps> = ({ currentMonth, onMonthCh
     }
     
     onMonthChange(newDate);
-    
-    // Criar despesas mensais automaticamente quando navegar
-    console.log('Navegando para novo mês, garantindo que despesas mensais existam...');
-    await ensureMonthlyExpensesExist();
   };
 
   return (

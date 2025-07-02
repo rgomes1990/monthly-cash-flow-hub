@@ -1,11 +1,12 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { CreditCard, Edit, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import ExpenseEditForm from '@/components/ExpenseEditForm';
 
 interface Expense {
   id: string;
@@ -29,6 +30,8 @@ interface InstallmentExpensesProps {
 }
 
 const InstallmentExpenses: React.FC<InstallmentExpensesProps> = ({ expenses, onUpdate, onDelete }) => {
+  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+
   const getCategoryColor = (category: string) => {
     const colors: { [key: string]: string } = {
       'Alimentação': 'bg-green-100 text-green-800',
@@ -48,6 +51,15 @@ const InstallmentExpenses: React.FC<InstallmentExpensesProps> = ({ expenses, onU
 
   const handlePaidToggle = (id: string, paid: boolean) => {
     onUpdate(id, { paid });
+  };
+
+  const handleEdit = (expense: Expense) => {
+    setEditingExpense(expense);
+  };
+
+  const handleSaveEdit = (id: string, updates: Partial<Expense>) => {
+    onUpdate(id, updates);
+    setEditingExpense(null);
   };
 
   return (
@@ -134,9 +146,7 @@ const InstallmentExpenses: React.FC<InstallmentExpensesProps> = ({ expenses, onU
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => {
-                          // Implementar edição
-                        }}
+                        onClick={() => handleEdit(expense)}
                       >
                         <Edit className="w-4 h-4" />
                       </Button>
@@ -155,6 +165,14 @@ const InstallmentExpenses: React.FC<InstallmentExpensesProps> = ({ expenses, onU
             </Card>
           ))}
         </div>
+      )}
+
+      {editingExpense && (
+        <ExpenseEditForm
+          expense={editingExpense}
+          onSave={handleSaveEdit}
+          onCancel={() => setEditingExpense(null)}
+        />
       )}
     </div>
   );

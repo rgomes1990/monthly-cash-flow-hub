@@ -1,45 +1,12 @@
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Database } from '@/integrations/supabase/types';
+import { Expense, createExpenseInsert } from '@/utils/expenseUtils';
+import { fetchExpensesFromDB, createExpenseInDB, updateExpenseInDB, deleteExpenseFromDB } from '@/services/expenseService';
+import { useMonthlyExpenseOperations } from '@/hooks/useMonthlyExpenses';
+import { useInstallmentExpenseOperations } from '@/hooks/useInstallmentExpenses';
 
-type ExpenseRow = Database['public']['Tables']['expenses']['Row'];
-type ExpenseInsert = Database['public']['Tables']['expenses']['Insert'];
-
-export interface Expense {
-  id: string;
-  title: string;
-  amount: number;
-  category: string;
-  type: 'monthly' | 'installment' | 'casual';
-  expense_category: 'personal' | 'company';
-  date: string;
-  description?: string;
-  paid?: boolean;
-  installment_total?: number;
-  installment_current?: number;
-  is_recurring?: boolean;
-  parent_expense_id?: string;
-  recurring_day?: number;
-}
-
-const mapExpenseRowToExpense = (row: ExpenseRow): Expense => ({
-  id: row.id,
-  title: row.title,
-  amount: row.amount,
-  category: row.category,
-  type: row.type as 'monthly' | 'installment' | 'casual',
-  expense_category: row.expense_category as 'personal' | 'company',
-  date: row.date,
-  description: row.description || undefined,
-  paid: row.paid || false,
-  installment_total: row.installment_total || undefined,
-  installment_current: row.installment_current || undefined,
-  is_recurring: row.is_recurring || false,
-  parent_expense_id: row.parent_expense_id || undefined,
-  recurring_day: row.recurring_day || undefined,
-});
+export { Expense } from '@/utils/expenseUtils';
 
 export const useExpenses = (expenseCategory: 'personal' | 'company') => {
   const [expenses, setExpenses] = useState<Expense[]>([]);
@@ -48,15 +15,8 @@ export const useExpenses = (expenseCategory: 'personal' | 'company') => {
 
   const fetchExpenses = async () => {
     try {
-      const { data, error } = await supabase
-        .from('expenses')
-        .select('*')
-        .eq('expense_category', expenseCategory)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      const mappedExpenses = (data || []).map(mapExpenseRowToExpense);
-      setExpenses(mappedExpenses);
+      const data = await fetchExpensesFromDB(expenseCategory);
+      setExpenses(data);
     } catch (error) {
       console.error('Erro ao buscar despesas:', error);
       toast({
@@ -69,305 +29,22 @@ export const useExpenses = (expenseCategory: 'personal' | 'company') => {
     }
   };
 
-  const createMultipleMonthlyExpenses = async (expense: Omit<Expense, 'id'>, monthsToCreate: number = 12) => {
-    try {
-      const expenseData: ExpenseInsert = {
-        title: expense.title,
-        amount: expense.amount,
-        category: expense.category,
-        type: expense.type,
-        expense_category: expenseCategory,
-        date: expense.date,
-        description: expense.description || null,
-        paid: expense.paid || false,
-        installment_total: null,
-        installment_current: null,
-        is_recurring: true,
-        parent_expense_id: null,
-        recurring_day: expense.recurring_day || null,
-      };
-
-      // Criar a despesa principal (template)
-      const { data: mainExpense, error: mainError } = await supabase
-        .from('expenses')
-        .insert([expenseData])
-        .select()
-        .single();
-
-      if (mainError) throw mainError;
-
-      console.log(`Criando despesas mensais para ${monthsToCreate} meses futuros`);
-
-      // Criar despesas para os próximos meses
-      const futureExpenses = [];
-      const baseDate = new Date(expense.date);
-      
-      for (let i = 1; i <= monthsToCreate; i++) {
-        const futureDate = new Date(baseDate);
-        futureDate.setMonth(futureDate.getMonth() + i);
-        
-        // Se há um dia específico, ajustar
-        if (expense.recurring_day) {
-          futureDate.setDate(expense.recurring_day);
-        }
-
-        futureExpenses.push({
-          ...expenseData,
-          date: futureDate.toISOString().split('T')[0],
-          is_recurring: false,
-          parent_expense_id: mainExpense.id,
-        });
-      }
-
-      if (futureExpenses.length > 0) {
-        const { error: futureError } = await supabase
-          .from('expenses')
-          .insert(futureExpenses);
-
-        if (futureError) throw futureError;
-        console.log(`${futureExpenses.length} despesas mensais criadas com sucesso`);
-      }
-
-      await fetchExpenses();
-      return mainExpense;
-    } catch (error) {
-      console.error('Erro ao criar despesas mensais:', error);
-      throw error;
-    }
-  };
-
-  const createInstallmentExpenses = async (expense: Omit<Expense, 'id'>) => {
-    try {
-      if (!expense.installment_total || !expense.installment_current) {
-        throw new Error('Dados de parcelamento inválidos');
-      }
-
-      console.log(`Criando ${expense.installment_total} parcelas da despesa ${expense.title}`);
-
-      const installmentExpenses = [];
-      const baseDate = new Date(expense.date);
-      
-      for (let i = 0; i < expense.installment_total; i++) {
-        const installmentDate = new Date(baseDate);
-        installmentDate.setMonth(installmentDate.getMonth() + i);
-
-        const expenseData: ExpenseInsert = {
-          title: `${expense.title} (${i + 1}/${expense.installment_total})`,
-          amount: expense.amount,
-          category: expense.category,
-          type: expense.type,
-          expense_category: expenseCategory,
-          date: installmentDate.toISOString().split('T')[0],
-          description: expense.description || null,
-          paid: expense.paid || false,
-          installment_total: expense.installment_total,
-          installment_current: i + 1,
-          is_recurring: false,
-          parent_expense_id: i === 0 ? null : undefined,
-          recurring_day: null,
-        };
-
-        installmentExpenses.push(expenseData);
-      }
-
-      const { data, error } = await supabase
-        .from('expenses')
-        .insert(installmentExpenses)
-        .select();
-
-      if (error) throw error;
-
-      console.log(`${installmentExpenses.length} parcelas criadas com sucesso`);
-      await fetchExpenses();
-      return data;
-    } catch (error) {
-      console.error('Erro ao criar despesas parceladas:', error);
-      throw error;
-    }
-  };
-
-  const replicateMonthlyExpenseToFuture = async (expenseId: string) => {
-    try {
-      // Buscar a despesa original
-      const { data: originalExpense, error: fetchError } = await supabase
-        .from('expenses')
-        .select('*')
-        .eq('id', expenseId)
-        .single();
-
-      if (fetchError || !originalExpense) throw fetchError || new Error('Despesa not found');
-
-      const baseDate = new Date(originalExpense.date);
-      const currentDate = new Date();
-      
-      // Criar despesas para os próximos 12 meses a partir do mês atual
-      const futureExpenses = [];
-      
-      for (let i = 1; i <= 12; i++) {
-        const futureDate = new Date(currentDate);
-        futureDate.setMonth(futureDate.getMonth() + i);
-        
-        // Usar o mesmo dia da despesa original
-        if (originalExpense.recurring_day) {
-          futureDate.setDate(originalExpense.recurring_day);
-        } else {
-          futureDate.setDate(baseDate.getDate());
-        }
-
-        const expenseData: ExpenseInsert = {
-          title: originalExpense.title,
-          amount: originalExpense.amount,
-          category: originalExpense.category,
-          type: originalExpense.type,
-          expense_category: originalExpense.expense_category,
-          date: futureDate.toISOString().split('T')[0],
-          description: originalExpense.description,
-          paid: false,
-          installment_total: null,
-          installment_current: null,
-          is_recurring: false,
-          parent_expense_id: originalExpense.parent_expense_id || originalExpense.id,
-          recurring_day: originalExpense.recurring_day,
-        };
-
-        futureExpenses.push(expenseData);
-      }
-
-      if (futureExpenses.length > 0) {
-        const { error: insertError } = await supabase
-          .from('expenses')
-          .insert(futureExpenses);
-
-        if (insertError) throw insertError;
-        console.log(`${futureExpenses.length} despesas mensais replicadas para o futuro`);
-        
-        await fetchExpenses();
-        
-        toast({
-          title: "Sucesso",
-          description: `Despesa replicada para ${futureExpenses.length} meses futuros!`,
-        });
-      }
-    } catch (error) {
-      console.error('Erro ao replicar despesa mensal:', error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível replicar a despesa mensal",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const replicateInstallmentExpenseToFuture = async (expenseId: string) => {
-    try {
-      const { data: originalExpense, error: fetchError } = await supabase
-        .from('expenses')
-        .select('*')
-        .eq('id', expenseId)
-        .single();
-
-      if (fetchError || !originalExpense) throw fetchError || new Error('Despesa not found');
-
-      if (!originalExpense.installment_total || !originalExpense.installment_current) {
-        throw new Error('Dados de parcelamento inválidos');
-      }
-
-      const baseDate = new Date(originalExpense.date);
-      const remainingInstallments = originalExpense.installment_total - originalExpense.installment_current;
-      
-      if (remainingInstallments <= 0) {
-        toast({
-          title: "Aviso",
-          description: "Esta despesa parcelada já foi totalmente replicada",
-        });
-        return;
-      }
-
-      const futureExpenses = [];
-      
-      for (let i = 1; i <= remainingInstallments; i++) {
-        const futureDate = new Date(baseDate);
-        futureDate.setMonth(futureDate.getMonth() + i);
-
-        const currentInstallment = originalExpense.installment_current + i;
-
-        const expenseData: ExpenseInsert = {
-          title: `${originalExpense.title.replace(/ \(\d+\/\d+\)$/, '')} (${currentInstallment}/${originalExpense.installment_total})`,
-          amount: originalExpense.amount,
-          category: originalExpense.category,
-          type: originalExpense.type,
-          expense_category: originalExpense.expense_category,
-          date: futureDate.toISOString().split('T')[0],
-          description: originalExpense.description,
-          paid: false,
-          installment_total: originalExpense.installment_total,
-          installment_current: currentInstallment,
-          is_recurring: false,
-          parent_expense_id: originalExpense.parent_expense_id || originalExpense.id,
-          recurring_day: null,
-        };
-
-        futureExpenses.push(expenseData);
-      }
-
-      if (futureExpenses.length > 0) {
-        const { error: insertError } = await supabase
-          .from('expenses')
-          .insert(futureExpenses);
-
-        if (insertError) throw insertError;
-        console.log(`${futureExpenses.length} parcelas replicadas para o futuro`);
-        
-        await fetchExpenses();
-        
-        toast({
-          title: "Sucesso",
-          description: `${futureExpenses.length} parcelas replicadas para os meses futuros!`,
-        });
-      }
-    } catch (error) {
-      console.error('Erro ao replicar despesa parcelada:', error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível replicar a despesa parcelada",
-        variant: "destructive",
-      });
-    }
-  };
+  const monthlyOps = useMonthlyExpenseOperations(expenseCategory, fetchExpenses);
+  const installmentOps = useInstallmentExpenseOperations(expenseCategory, fetchExpenses);
 
   const addExpense = async (expense: Omit<Expense, 'id'>) => {
     try {
       if (expense.type === 'monthly') {
-        await createMultipleMonthlyExpenses(expense, 12);
+        await monthlyOps.createMultipleMonthlyExpenses(expense, 12);
       } else if (expense.type === 'installment') {
-        await createInstallmentExpenses(expense);
+        await installmentOps.createInstallmentExpenses(expense);
       } else {
         // Despesa casual
-        const expenseData: ExpenseInsert = {
-          title: expense.title,
-          amount: expense.amount,
-          category: expense.category,
-          type: expense.type,
-          expense_category: expenseCategory,
-          date: expense.date,
-          description: expense.description || null,
-          paid: expense.paid || false,
-          installment_total: null,
-          installment_current: null,
-          is_recurring: false,
-          parent_expense_id: null,
-          recurring_day: null,
-        };
-
-        const { data, error } = await supabase
-          .from('expenses')
-          .insert([expenseData])
-          .select()
-          .single();
-
-        if (error) throw error;
-        await fetchExpenses();
+        const expenseData = createExpenseInsert(expense, expenseCategory);
+        await createExpenseInDB(expenseData);
       }
+      
+      await fetchExpenses();
       
       toast({
         title: "Sucesso",
@@ -385,69 +62,18 @@ export const useExpenses = (expenseCategory: 'personal' | 'company') => {
 
   const updateExpense = async (id: string, updates: Partial<Expense>) => {
     try {
-      // Primeiro, buscar a despesa para verificar se é monthly
-      const { data: expense, error: fetchError } = await supabase
-        .from('expenses')
-        .select('*')
-        .eq('id', id)
-        .single();
-
-      if (fetchError) throw fetchError;
-
-      if (expense.type === 'monthly') {
-        // Para despesas mensais, atualizar a atual e todas as futuras
-        const currentDate = new Date();
-        const expenseDate = new Date(expense.date);
-        
-        // Atualizar a despesa atual
-        const { error: updateCurrentError } = await supabase
-          .from('expenses')
-          .update(updates)
-          .eq('id', id);
-
-        if (updateCurrentError) throw updateCurrentError;
-
-        // Se é uma despesa pai (template), atualizar todas as filhas futuras
-        if (expense.parent_expense_id === null && expense.is_recurring) {
-          const { error: updateChildrenError } = await supabase
-            .from('expenses')
-            .update(updates)
-            .eq('parent_expense_id', id)
-            .gte('date', currentDate.toISOString().split('T')[0]);
-
-          if (updateChildrenError) throw updateChildrenError;
-        } else if (expense.parent_expense_id) {
-          // Se é uma despesa filha, atualizar ela e todas as futuras do mesmo parent
-          const { error: updateSiblingsError } = await supabase
-            .from('expenses')
-            .update(updates)
-            .eq('parent_expense_id', expense.parent_expense_id)
-            .gte('date', expenseDate.toISOString().split('T')[0]);
-
-          if (updateSiblingsError) throw updateSiblingsError;
-
-          // Também atualizar o parent se necessário
-          const { error: updateParentError } = await supabase
-            .from('expenses')
-            .update(updates)
-            .eq('id', expense.parent_expense_id);
-
-          if (updateParentError) throw updateParentError;
-        }
+      const expense = expenses.find(e => e.id === id);
+      
+      if (expense?.type === 'monthly') {
+        await monthlyOps.updateMonthlyExpense(id, updates);
       } else {
-        // Para outras despesas, atualizar normalmente
-        const { error } = await supabase
-          .from('expenses')
-          .update(updates)
-          .eq('id', id);
-
-        if (error) throw error;
+        await updateExpenseInDB(id, updates);
       }
 
       await fetchExpenses();
       toast({
         title: "Sucesso",
-        description: expense.type === 'monthly' 
+        description: expense?.type === 'monthly' 
           ? "Despesa mensal atualizada em todos os meses futuros!" 
           : "Despesa atualizada com sucesso!",
       });
@@ -463,84 +89,18 @@ export const useExpenses = (expenseCategory: 'personal' | 'company') => {
 
   const deleteExpense = async (id: string) => {
     try {
-      // Buscar a despesa para verificar se é monthly
-      const { data: expense, error: fetchError } = await supabase
-        .from('expenses')
-        .select('*')
-        .eq('id', id)
-        .single();
-
-      if (fetchError) throw fetchError;
-
-      if (expense.type === 'monthly') {
-        // Para despesas mensais, deletar apenas do mês atual em diante
-        const currentDate = new Date();
-        const expenseDate = new Date(expense.date);
-        
-        if (expense.parent_expense_id === null && expense.is_recurring) {
-          // Se é uma despesa pai (template), deletar todas as despesas filhas futuras (incluindo hoje)
-          const { error: deleteChildrenError } = await supabase
-            .from('expenses')
-            .delete()
-            .eq('parent_expense_id', id)
-            .gte('date', currentDate.toISOString().split('T')[0]);
-
-          if (deleteChildrenError) throw deleteChildrenError;
-
-          // Deletar a despesa principal
-          const { error: deleteParentError } = await supabase
-            .from('expenses')
-            .delete()
-            .eq('id', id);
-
-          if (deleteParentError) throw deleteParentError;
-        } else if (expense.parent_expense_id) {
-          // Se é uma despesa filha, deletar ela e todas as futuras do mesmo parent (incluindo hoje)
-          const { error: deleteFutureError } = await supabase
-            .from('expenses')
-            .delete()
-            .eq('parent_expense_id', expense.parent_expense_id)
-            .gte('date', expenseDate.toISOString().split('T')[0]);
-
-          if (deleteFutureError) throw deleteFutureError;
-
-          // Se não há mais despesas filhas, deletar o parent também
-          const { data: remainingChildren } = await supabase
-            .from('expenses')
-            .select('id')
-            .eq('parent_expense_id', expense.parent_expense_id);
-
-          if (!remainingChildren || remainingChildren.length === 0) {
-            const { error: deleteParentError } = await supabase
-              .from('expenses')
-              .delete()
-              .eq('id', expense.parent_expense_id);
-
-            if (deleteParentError) throw deleteParentError;
-          }
-        } else {
-          // Deletar a despesa atual se não tem parent_expense_id
-          const { error: deleteCurrentError } = await supabase
-            .from('expenses')
-            .delete()
-            .eq('id', id);
-
-          if (deleteCurrentError) throw deleteCurrentError;
-        }
+      const expense = expenses.find(e => e.id === id);
+      
+      if (expense?.type === 'monthly') {
+        await monthlyOps.deleteMonthlyExpense(id);
       } else {
-        // Para outras despesas, deletar normalmente
-        const { error } = await supabase
-          .from('expenses')
-          .delete()
-          .eq('id', id);
-
-        if (error) throw error;
+        await deleteExpenseFromDB(id);
       }
       
       await fetchExpenses();
       toast({
         title: "Sucesso",
-        description: expense.type === 'monthly' 
+        description: expense?.type === 'monthly' 
           ? "Despesa mensal removida do mês atual e futuros!" 
           : "Despesa removida com sucesso!",
       });
@@ -564,8 +124,8 @@ export const useExpenses = (expenseCategory: 'personal' | 'company') => {
     addExpense,
     updateExpense,
     deleteExpense,
-    replicateMonthlyExpenseToFuture,
-    replicateInstallmentExpenseToFuture,
+    replicateMonthlyExpenseToFuture: monthlyOps.replicateMonthlyExpenseToFuture,
+    replicateInstallmentExpenseToFuture: installmentOps.replicateInstallmentExpenseToFuture,
     refetch: fetchExpenses,
   };
 };

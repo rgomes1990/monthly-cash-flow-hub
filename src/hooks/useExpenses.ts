@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Expense, createExpenseInsert } from '@/utils/expenseUtils';
@@ -6,7 +5,7 @@ import { fetchExpensesFromDB, createExpenseInDB, updateExpenseInDB, deleteExpens
 import { useMonthlyExpenseOperations } from '@/hooks/useMonthlyExpenses';
 import { useInstallmentExpenseOperations } from '@/hooks/useInstallmentExpenses';
 
-export { Expense } from '@/utils/expenseUtils';
+export type { Expense } from '@/utils/expenseUtils';
 
 export const useExpenses = (expenseCategory: 'personal' | 'company') => {
   const [expenses, setExpenses] = useState<Expense[]>([]);

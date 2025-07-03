@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Database } from '@/integrations/supabase/types';
 import { mapExpenseRowToExpense, Expense } from '@/utils/expenseUtils';
@@ -57,7 +56,8 @@ export const deleteExpenseFromDB = async (id: string) => {
 
 export const deleteExpensesByCondition = async (condition: { 
   parent_expense_id?: string; 
-  date_gte?: string; 
+  date_gte?: string;
+  installment_current_gte?: number;
 }) => {
   let query = supabase.from('expenses').delete();
   
@@ -69,7 +69,20 @@ export const deleteExpensesByCondition = async (condition: {
     query = query.gte('date', condition.date_gte);
   }
 
+  if (condition.installment_current_gte) {
+    query = query.gte('installment_current', condition.installment_current_gte);
+  }
+
   const { error } = await query;
+  if (error) throw error;
+};
+
+export const deleteInstallmentExpensesFromCurrent = async (parentId: string, currentInstallment: number) => {
+  const { error } = await supabase
+    .from('expenses')
+    .delete()
+    .or(`id.eq.${parentId},and(parent_expense_id.eq.${parentId},installment_current.gte.${currentInstallment})`);
+
   if (error) throw error;
 };
 

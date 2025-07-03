@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Expense, createExpenseInsert } from '@/utils/expenseUtils';
@@ -92,6 +93,8 @@ export const useExpenses = (expenseCategory: 'personal' | 'company') => {
       
       if (expense?.type === 'monthly') {
         await monthlyOps.deleteMonthlyExpense(id);
+      } else if (expense?.type === 'installment') {
+        await installmentOps.deleteInstallmentExpense(id);
       } else {
         await deleteExpenseFromDB(id);
       }
@@ -101,6 +104,8 @@ export const useExpenses = (expenseCategory: 'personal' | 'company') => {
         title: "Sucesso",
         description: expense?.type === 'monthly' 
           ? "Despesa mensal removida do mês atual e futuros!" 
+          : expense?.type === 'installment'
+          ? "Despesa parcelada removida da parcela atual e futuras!"
           : "Despesa removida com sucesso!",
       });
     } catch (error) {

@@ -3,7 +3,8 @@ import { useToast } from '@/hooks/use-toast';
 import { Expense, createExpenseInsert } from '@/utils/expenseUtils';
 import { 
   createMultipleExpensesInDB, 
-  getExpenseById
+  getExpenseById,
+  deleteInstallmentExpensesFromCurrent
 } from '@/services/expenseService';
 
 export const useInstallmentExpenseOperations = (
@@ -106,8 +107,33 @@ export const useInstallmentExpenseOperations = (
     }
   };
 
+  const deleteInstallmentExpense = async (expenseId: string) => {
+    try {
+      const expense = await getExpenseById(expenseId);
+      
+      if (!expense.installment_current) {
+        throw new Error('Dados de parcelamento inválidos');
+      }
+
+      // Se é uma despesa com parent_expense_id, usar o parent_id
+      // Se não tem parent_expense_id, usar o próprio id como parent
+      const parentId = expense.parent_expense_id || expense.id;
+      
+      // Excluir a parcela atual e todas as posteriores
+      await deleteInstallmentExpensesFromCurrent(parentId, expense.installment_current);
+      
+      console.log(`Parcelas da despesa ${expense.title} excluídas a partir da parcela ${expense.installment_current}`);
+      
+      await refetch();
+    } catch (error) {
+      console.error('Erro ao excluir despesa parcelada:', error);
+      throw error;
+    }
+  };
+
   return {
     createInstallmentExpenses,
     replicateInstallmentExpenseToFuture,
+    deleteInstallmentExpense,
   };
 };

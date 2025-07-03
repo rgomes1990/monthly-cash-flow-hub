@@ -385,22 +385,71 @@ export const useExpenses = (expenseCategory: 'personal' | 'company') => {
 
   const updateExpense = async (id: string, updates: Partial<Expense>) => {
     try {
-      const { data, error } = await supabase
+      // Primeiro, buscar a despesa para verificar se é monthly
+      const { data: expense, error: fetchError } = await supabase
         .from('expenses')
-        .update(updates)
+        .select('*')
         .eq('id', id)
-        .select()
         .single();
 
-      if (error) throw error;
-      
-      setExpenses(prev => prev.map(expense => 
-        expense.id === id ? { ...expense, ...updates } : expense
-      ));
+      if (fetchError) throw fetchError;
 
+      if (expense.type === 'monthly') {
+        // Para despesas mensais, atualizar a atual e todas as futuras
+        const currentDate = new Date();
+        const expenseDate = new Date(expense.date);
+        
+        // Atualizar a despesa atual
+        const { error: updateCurrentError } = await supabase
+          .from('expenses')
+          .update(updates)
+          .eq('id', id);
+
+        if (updateCurrentError) throw updateCurrentError;
+
+        // Se é uma despesa pai (template), atualizar todas as filhas futuras
+        if (expense.parent_expense_id === null && expense.is_recurring) {
+          const { error: updateChildrenError } = await supabase
+            .from('expenses')
+            .update(updates)
+            .eq('parent_expense_id', id)
+            .gte('date', currentDate.toISOString().split('T')[0]);
+
+          if (updateChildrenError) throw updateChildrenError;
+        } else if (expense.parent_expense_id) {
+          // Se é uma despesa filha, atualizar ela e todas as futuras do mesmo parent
+          const { error: updateSiblingsError } = await supabase
+            .from('expenses')
+            .update(updates)
+            .eq('parent_expense_id', expense.parent_expense_id)
+            .gte('date', expenseDate.toISOString().split('T')[0]);
+
+          if (updateSiblingsError) throw updateSiblingsError;
+
+          // Também atualizar o parent se necessário
+          const { error: updateParentError } = await supabase
+            .from('expenses')
+            .update(updates)
+            .eq('id', expense.parent_expense_id);
+
+          if (updateParentError) throw updateParentError;
+        }
+      } else {
+        // Para outras despesas, atualizar normalmente
+        const { error } = await supabase
+          .from('expenses')
+          .update(updates)
+          .eq('id', id);
+
+        if (error) throw error;
+      }
+
+      await fetchExpenses();
       toast({
         title: "Sucesso",
-        description: "Despesa atualizada com sucesso!",
+        description: expense.type === 'monthly' 
+          ? "Despesa mensal atualizada em todos os meses futuros!" 
+          : "Despesa atualizada com sucesso!",
       });
     } catch (error) {
       console.error('Erro ao atualizar despesa:', error);
@@ -424,29 +473,12 @@ export const useExpenses = (expenseCategory: 'personal' | 'company') => {
       if (fetchError) throw fetchError;
 
       if (expense.type === 'monthly') {
-        // Para despesas mensais, deletar também as futuras (não as passadas)
+        // Para despesas mensais, deletar apenas do mês atual em diante
         const currentDate = new Date();
         const expenseDate = new Date(expense.date);
         
-        if (expense.parent_expense_id) {
-          // Se é uma despesa filha, deletar ela e todas as futuras do mesmo parent
-          const { error: deleteError } = await supabase
-            .from('expenses')
-            .delete()
-            .eq('parent_expense_id', expense.parent_expense_id)
-            .gte('date', currentDate.toISOString().split('T')[0]);
-
-          if (deleteError) throw deleteError;
-
-          // Deletar a despesa atual também
-          const { error: deleteCurrentError } = await supabase
-            .from('expenses')
-            .delete()
-            .eq('id', id);
-
-          if (deleteCurrentError) throw deleteCurrentError;
-        } else {
-          // Se é uma despesa pai (template), deletar todas as despesas filhas futuras
+        if (expense.parent_expense_id === null && expense.is_recurring) {
+          // Se é uma despesa pai (template), deletar todas as despesas filhas futuras (incluindo hoje)
           const { error: deleteChildrenError } = await supabase
             .from('expenses')
             .delete()
@@ -462,6 +494,38 @@ export const useExpenses = (expenseCategory: 'personal' | 'company') => {
             .eq('id', id);
 
           if (deleteParentError) throw deleteParentError;
+        } else if (expense.parent_expense_id) {
+          // Se é uma despesa filha, deletar ela e todas as futuras do mesmo parent (incluindo hoje)
+          const { error: deleteFutureError } = await supabase
+            .from('expenses')
+            .delete()
+            .eq('parent_expense_id', expense.parent_expense_id)
+            .gte('date', expenseDate.toISOString().split('T')[0]);
+
+          if (deleteFutureError) throw deleteFutureError;
+
+          // Se não há mais despesas filhas, deletar o parent também
+          const { data: remainingChildren } = await supabase
+            .from('expenses')
+            .select('id')
+            .eq('parent_expense_id', expense.parent_expense_id);
+
+          if (!remainingChildren || remainingChildren.length === 0) {
+            const { error: deleteParentError } = await supabase
+              .from('expenses')
+              .delete()
+              .eq('id', expense.parent_expense_id);
+
+            if (deleteParentError) throw deleteParentError;
+          }
+        } else {
+          // Deletar a despesa atual se não tem parent_expense_id
+          const { error: deleteCurrentError } = await supabase
+            .from('expenses')
+            .delete()
+            .eq('id', id);
+
+          if (deleteCurrentError) throw deleteCurrentError;
         }
       } else {
         // Para outras despesas, deletar normalmente
@@ -473,10 +537,12 @@ export const useExpenses = (expenseCategory: 'personal' | 'company') => {
         if (error) throw error;
       }
       
-      setExpenses(prev => prev.filter(expense => expense.id !== id));
+      await fetchExpenses();
       toast({
         title: "Sucesso",
-        description: "Despesa removida com sucesso!",
+        description: expense.type === 'monthly' 
+          ? "Despesa mensal removida do mês atual e futuros!" 
+          : "Despesa removida com sucesso!",
       });
     } catch (error) {
       console.error('Erro ao deletar despesa:', error);

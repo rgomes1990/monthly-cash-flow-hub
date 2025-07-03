@@ -1,3 +1,4 @@
+
 import { useToast } from '@/hooks/use-toast';
 import { Expense, createExpenseInsert } from '@/utils/expenseUtils';
 import { 
@@ -75,21 +76,27 @@ export const useMonthlyExpenseOperations = (
       const existingDates = new Set(existingFutureExpenses.map(exp => exp.date));
       const futureExpenses = [];
       
+      // Começar do próximo mês (incluindo setembro se estivermos em agosto)
       for (let i = 1; i <= 12; i++) {
         const futureDate = new Date(currentDate);
         futureDate.setMonth(futureDate.getMonth() + i);
         
+        // Definir o dia correto baseado na despesa original
         if (originalExpense.recurring_day) {
           futureDate.setDate(originalExpense.recurring_day);
         } else {
           const baseDate = new Date(originalExpense.date);
-          futureDate.setDate(baseDate.getDate());
+          // Garantir que o dia seja válido no mês de destino
+          const originalDay = baseDate.getDate();
+          const lastDayOfMonth = new Date(futureDate.getFullYear(), futureDate.getMonth() + 1, 0).getDate();
+          futureDate.setDate(Math.min(originalDay, lastDayOfMonth));
         }
 
         const futureDateString = futureDate.toISOString().split('T')[0];
+        const currentDateString = currentDate.toISOString().split('T')[0];
         
-        // Só adicionar se não existir uma despesa para esta data
-        if (!existingDates.has(futureDateString)) {
+        // Só adicionar se a data for futura E não existir uma despesa para esta data
+        if (futureDateString > currentDateString && !existingDates.has(futureDateString)) {
           futureExpenses.push(createExpenseInsert({
             title: originalExpense.title,
             amount: originalExpense.amount,

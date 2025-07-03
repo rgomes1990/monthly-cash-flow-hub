@@ -111,3 +111,19 @@ export const countExpensesByCondition = async (condition: { parent_expense_id: s
   if (error) throw error;
   return data?.length || 0;
 };
+
+export const checkExistingExpensesByParentAndDateRange = async (
+  parentId: string, 
+  startDate: string, 
+  endDate: string
+) => {
+  const { data, error } = await supabase
+    .from('expenses')
+    .select('date')
+    .eq('parent_expense_id', parentId)
+    .gte('date', startDate)
+    .lte('date', endDate);
+
+  if (error) throw error;
+  return data || [];
+};

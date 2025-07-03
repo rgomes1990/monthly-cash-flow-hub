@@ -1,4 +1,3 @@
-
 import { useToast } from '@/hooks/use-toast';
 import { Expense, createExpenseInsert } from '@/utils/expenseUtils';
 import { 
@@ -9,7 +8,8 @@ import {
   updateExpensesByCondition,
   deleteExpenseFromDB,
   deleteExpensesByCondition,
-  countExpensesByCondition
+  countExpensesByCondition,
+  checkExistingExpensesByParentAndDateRange
 } from '@/services/expenseService';
 
 export const useMonthlyExpenseOperations = (
@@ -57,9 +57,22 @@ export const useMonthlyExpenseOperations = (
   const replicateMonthlyExpenseToFuture = async (expenseId: string) => {
     try {
       const originalExpense = await getExpenseById(expenseId);
-      const baseDate = new Date(originalExpense.date);
       const currentDate = new Date();
       
+      // Determinar o parent_expense_id correto
+      const parentId = originalExpense.parent_expense_id || originalExpense.id;
+      
+      // Verificar se já existem despesas futuras para evitar duplicação
+      const endDate = new Date(currentDate);
+      endDate.setMonth(endDate.getMonth() + 12);
+      
+      const existingFutureExpenses = await checkExistingExpensesByParentAndDateRange(
+        parentId,
+        currentDate.toISOString().split('T')[0],
+        endDate.toISOString().split('T')[0]
+      );
+
+      const existingDates = new Set(existingFutureExpenses.map(exp => exp.date));
       const futureExpenses = [];
       
       for (let i = 1; i <= 12; i++) {
@@ -69,22 +82,28 @@ export const useMonthlyExpenseOperations = (
         if (originalExpense.recurring_day) {
           futureDate.setDate(originalExpense.recurring_day);
         } else {
+          const baseDate = new Date(originalExpense.date);
           futureDate.setDate(baseDate.getDate());
         }
 
-        futureExpenses.push(createExpenseInsert({
-          title: originalExpense.title,
-          amount: originalExpense.amount,
-          category: originalExpense.category,
-          type: originalExpense.type as 'monthly' | 'installment' | 'casual',
-          expense_category: originalExpense.expense_category as 'personal' | 'company',
-          date: futureDate.toISOString().split('T')[0],
-          description: originalExpense.description || undefined,
-          paid: false,
-          is_recurring: false,
-          parent_expense_id: originalExpense.parent_expense_id || originalExpense.id,
-          recurring_day: originalExpense.recurring_day || undefined,
-        }, expenseCategory));
+        const futureDateString = futureDate.toISOString().split('T')[0];
+        
+        // Só adicionar se não existir uma despesa para esta data
+        if (!existingDates.has(futureDateString)) {
+          futureExpenses.push(createExpenseInsert({
+            title: originalExpense.title,
+            amount: originalExpense.amount,
+            category: originalExpense.category,
+            type: originalExpense.type as 'monthly' | 'installment' | 'casual',
+            expense_category: originalExpense.expense_category as 'personal' | 'company',
+            date: futureDateString,
+            description: originalExpense.description || undefined,
+            paid: false,
+            is_recurring: false,
+            parent_expense_id: parentId,
+            recurring_day: originalExpense.recurring_day || undefined,
+          }, expenseCategory));
+        }
       }
 
       if (futureExpenses.length > 0) {
@@ -95,7 +114,12 @@ export const useMonthlyExpenseOperations = (
         
         toast({
           title: "Sucesso",
-          description: `Despesa replicada para ${futureExpenses.length} meses futuros!`,
+          description: `${futureExpenses.length} despesas novas replicadas para os meses futuros!`,
+        });
+      } else {
+        toast({
+          title: "Aviso",
+          description: "Todas as despesas já foram replicadas para os meses futuros.",
         });
       }
     } catch (error) {

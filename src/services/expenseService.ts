@@ -142,6 +142,26 @@ export const checkExistingExpensesByParentAndDateRange = async (
   return data || [];
 };
 
+export const checkExistingExpensesByTitleAndValue = async (
+  title: string,
+  amount: number,
+  expenseCategory: 'personal' | 'company',
+  startDate: string,
+  endDate: string
+) => {
+  const { data, error } = await supabase
+    .from('expenses')
+    .select('date, title, amount')
+    .eq('expense_category', expenseCategory)
+    .eq('title', title)
+    .eq('amount', amount)
+    .gte('date', startDate)
+    .lte('date', endDate);
+
+  if (error) throw error;
+  return data || [];
+};
+
 export const unpaidAllFutureExpenses = async (expenseCategory: 'personal' | 'company') => {
   const currentDate = new Date().toISOString().split('T')[0];
   

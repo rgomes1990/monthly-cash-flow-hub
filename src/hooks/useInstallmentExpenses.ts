@@ -4,7 +4,8 @@ import { Expense, createExpenseInsert } from '@/utils/expenseUtils';
 import { 
   createMultipleExpensesInDB, 
   getExpenseById,
-  deleteInstallmentExpensesFromCurrent
+  deleteInstallmentExpensesFromCurrent,
+  checkExistingExpensesByTitleAndValue
 } from '@/services/expenseService';
 
 export const useInstallmentExpenseOperations = (
@@ -63,27 +64,46 @@ export const useInstallmentExpenseOperations = (
         return;
       }
 
+      // Verificar se já existem despesas com mesmo título (sem numeração) e valor
+      const baseTitle = originalExpense.title.replace(/ \(\d+\/\d+\)$/, '');
+      const endDate = new Date(baseDate);
+      endDate.setMonth(endDate.getMonth() + remainingInstallments);
+      
+      const existingFutureExpenses = await checkExistingExpensesByTitleAndValue(
+        baseTitle,
+        originalExpense.amount,
+        expenseCategory,
+        baseDate.toISOString().split('T')[0],
+        endDate.toISOString().split('T')[0]
+      );
+
+      // Criar um set com as datas que já tem despesas similares
+      const existingDates = new Set(existingFutureExpenses.map(exp => exp.date));
       const futureExpenses = [];
       
       for (let i = 1; i <= remainingInstallments; i++) {
         const futureDate = new Date(baseDate);
         futureDate.setMonth(futureDate.getMonth() + i);
+        const futureDateString = futureDate.toISOString().split('T')[0];
+        
+        // Só adicionar se não existir uma despesa com mesmo título base e valor nesta data
+        if (!existingDates.has(futureDateString)) {
+          const currentInstallment = originalExpense.installment_current + i;
 
-        const currentInstallment = originalExpense.installment_current + i;
-
-        futureExpenses.push(createExpenseInsert({
-          title: `${originalExpense.title.replace(/ \(\d+\/\d+\)$/, '')} (${currentInstallment}/${originalExpense.installment_total})`,
-          amount: originalExpense.amount,
-          category: originalExpense.category,
-          type: originalExpense.type as 'monthly' | 'installment' | 'casual',
-          expense_category: originalExpense.expense_category as 'personal' | 'company',
-          date: futureDate.toISOString().split('T')[0],
-          description: originalExpense.description || undefined,
-          paid: false,
-          installment_total: originalExpense.installment_total,
-          installment_current: currentInstallment,
-          parent_expense_id: originalExpense.parent_expense_id || originalExpense.id,
-        }, expenseCategory));
+          futureExpenses.push(createExpenseInsert({
+            title: `${baseTitle} (${currentInstallment}/${originalExpense.installment_total})`,
+            amount: originalExpense.amount,
+            category: originalExpense.category,
+            type: originalExpense.type as 'monthly' | 'installment' | 'casual',
+            expense_category: originalExpense.expense_category as 'personal' | 'company',
+            date: futureDateString,
+            description: originalExpense.description || undefined,
+            paid: false,
+            installment_total: originalExpense.installment_total,
+            installment_current: currentInstallment,
+            parent_expense_id: originalExpense.parent_expense_id || originalExpense.id,
+          }, expenseCategory));
+        }
       }
 
       if (futureExpenses.length > 0) {
@@ -95,6 +115,11 @@ export const useInstallmentExpenseOperations = (
         toast({
           title: "Sucesso",
           description: `${futureExpenses.length} parcelas replicadas para os meses futuros!`,
+        });
+      } else {
+        toast({
+          title: "Aviso",
+          description: "Todas as parcelas já foram replicadas para os meses futuros.",
         });
       }
     } catch (error) {

@@ -10,7 +10,8 @@ import {
   deleteExpenseFromDB,
   deleteExpensesByCondition,
   countExpensesByCondition,
-  checkExistingExpensesByParentAndDateRange
+  checkExistingExpensesByParentAndDateRange,
+  checkExistingExpensesByTitleAndValue
 } from '@/services/expenseService';
 
 export const useMonthlyExpenseOperations = (
@@ -67,8 +68,11 @@ export const useMonthlyExpenseOperations = (
       const endDate = new Date(currentDate);
       endDate.setMonth(endDate.getMonth() + 12);
       
-      const existingFutureExpenses = await checkExistingExpensesByParentAndDateRange(
-        parentId,
+      // Verificar duplicatas por título e valor
+      const existingFutureExpenses = await checkExistingExpensesByTitleAndValue(
+        originalExpense.title,
+        originalExpense.amount,
+        expenseCategory,
         currentDate.toISOString().split('T')[0],
         endDate.toISOString().split('T')[0]
       );
@@ -95,7 +99,7 @@ export const useMonthlyExpenseOperations = (
         const futureDateString = futureDate.toISOString().split('T')[0];
         const currentDateString = currentDate.toISOString().split('T')[0];
         
-        // Só adicionar se a data for futura E não existir uma despesa para esta data
+        // Só adicionar se a data for futura E não existir uma despesa com mesmo título e valor para esta data
         if (futureDateString > currentDateString && !existingDates.has(futureDateString)) {
           futureExpenses.push(createExpenseInsert({
             title: originalExpense.title,

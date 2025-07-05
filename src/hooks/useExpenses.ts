@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Expense, createExpenseInsert } from '@/utils/expenseUtils';
@@ -64,6 +63,18 @@ export const useExpenses = (expenseCategory: 'personal' | 'company') => {
     try {
       const expense = expenses.find(e => e.id === id);
       
+      // Se está apenas atualizando o status "paid", aplicar apenas na despesa específica
+      if (Object.keys(updates).length === 1 && 'paid' in updates) {
+        await updateExpenseInDB(id, updates);
+        await fetchExpenses();
+        toast({
+          title: "Sucesso",
+          description: "Status de pagamento atualizado!",
+        });
+        return;
+      }
+      
+      // Para outras atualizações, manter a lógica original
       if (expense?.type === 'monthly') {
         await monthlyOps.updateMonthlyExpense(id, updates);
       } else {

@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { Database } from '@/integrations/supabase/types';
 import { mapExpenseRowToExpense, Expense } from '@/utils/expenseUtils';
@@ -139,4 +140,16 @@ export const checkExistingExpensesByParentAndDateRange = async (
 
   if (error) throw error;
   return data || [];
+};
+
+export const unpaidAllFutureExpenses = async (expenseCategory: 'personal' | 'company') => {
+  const currentDate = new Date().toISOString().split('T')[0];
+  
+  const { error } = await supabase
+    .from('expenses')
+    .update({ paid: false })
+    .eq('expense_category', expenseCategory)
+    .gte('date', currentDate);
+
+  if (error) throw error;
 };

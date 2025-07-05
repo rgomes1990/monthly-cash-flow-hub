@@ -1,7 +1,8 @@
+
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Expense, createExpenseInsert } from '@/utils/expenseUtils';
-import { fetchExpensesFromDB, createExpenseInDB, updateExpenseInDB, deleteExpenseFromDB } from '@/services/expenseService';
+import { fetchExpensesFromDB, createExpenseInDB, updateExpenseInDB, deleteExpenseFromDB, unpaidAllFutureExpenses } from '@/services/expenseService';
 import { useMonthlyExpenseOperations } from '@/hooks/useMonthlyExpenses';
 import { useInstallmentExpenseOperations } from '@/hooks/useInstallmentExpenses';
 
@@ -129,6 +130,24 @@ export const useExpenses = (expenseCategory: 'personal' | 'company') => {
     }
   };
 
+  const unpaidAllFuture = async () => {
+    try {
+      await unpaidAllFutureExpenses(expenseCategory);
+      await fetchExpenses();
+      toast({
+        title: "Sucesso",
+        description: "Todas as despesas futuras foram desmarcadas como pagas!",
+      });
+    } catch (error) {
+      console.error('Erro ao desmarcar despesas futuras:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível desmarcar as despesas futuras",
+        variant: "destructive",
+      });
+    }
+  };
+
   useEffect(() => {
     fetchExpenses();
   }, [expenseCategory]);
@@ -139,6 +158,7 @@ export const useExpenses = (expenseCategory: 'personal' | 'company') => {
     addExpense,
     updateExpense,
     deleteExpense,
+    unpaidAllFuture,
     replicateMonthlyExpenseToFuture: monthlyOps.replicateMonthlyExpenseToFuture,
     replicateInstallmentExpenseToFuture: installmentOps.replicateInstallmentExpenseToFuture,
     refetch: fetchExpenses,

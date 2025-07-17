@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
-import { Plus, Calendar, TrendingUp, TrendingDown, DollarSign } from 'lucide-react';
+import { Plus, Calendar, TrendingUp, TrendingDown, DollarSign, Building2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -15,6 +16,7 @@ import MonthNavigator from '@/components/MonthNavigatorEnhanced';
 import { useExpenses } from '@/hooks/useExpenses';
 
 const Index = () => {
+  const navigate = useNavigate();
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [showExpenseForm, setShowExpenseForm] = useState(false);
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -76,13 +78,23 @@ const Index = () => {
               Gerencie suas finanças de forma inteligente
             </p>
           </div>
-          <Button 
-            onClick={() => setShowExpenseForm(true)}
-            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg transition-all duration-300 hover:shadow-xl"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Nova Despesa
-          </Button>
+          <div className="flex gap-3">
+            <Button 
+              onClick={() => navigate('/projects')}
+              variant="outline"
+              className="shadow-lg transition-all duration-300 hover:shadow-xl"
+            >
+              <Building2 className="w-4 h-4 mr-2" />
+              Projetos
+            </Button>
+            <Button 
+              onClick={() => setShowExpenseForm(true)}
+              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg transition-all duration-300 hover:shadow-xl"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Nova Despesa
+            </Button>
+          </div>
         </div>
 
         {/* Expense Filter */}

@@ -35,9 +35,9 @@ const Projects = () => {
     return true;
   });
 
-  // Get unique clients and responsibles for filter options
-  const uniqueClients = [...new Set(projects.map(p => p.client))];
-  const uniqueResponsibles = [...new Set(projects.map(p => p.responsible))];
+  // Get unique clients and responsibles for filter options (filter out empty values)
+  const uniqueClients = [...new Set(projects.map(p => p.client))].filter(client => client && client.trim() !== '');
+  const uniqueResponsibles = [...new Set(projects.map(p => p.responsible))].filter(responsible => responsible && responsible.trim() !== '');
 
   // Calculate statistics
   const stats = {

@@ -15,8 +15,8 @@ const Projects = () => {
   const [editingProject, setEditingProject] = useState(null);
   const [filters, setFilters] = useState({
     status: 'all',
-    client: '',
-    responsible: ''
+    client: 'all',
+    responsible: 'all'
   });
 
   const { 
@@ -30,8 +30,8 @@ const Projects = () => {
   // Filter projects based on current filters
   const filteredProjects = projects.filter(project => {
     if (filters.status !== 'all' && project.status !== filters.status) return false;
-    if (filters.client && !project.client.toLowerCase().includes(filters.client.toLowerCase())) return false;
-    if (filters.responsible && !project.responsible.toLowerCase().includes(filters.responsible.toLowerCase())) return false;
+    if (filters.client !== 'all' && !project.client.toLowerCase().includes(filters.client.toLowerCase())) return false;
+    if (filters.responsible !== 'all' && !project.responsible.toLowerCase().includes(filters.responsible.toLowerCase())) return false;
     return true;
   });
 
@@ -223,7 +223,7 @@ const Projects = () => {
                   <SelectValue placeholder="Cliente" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos os Clientes</SelectItem>
+                  <SelectItem value="all">Todos os Clientes</SelectItem>
                   {uniqueClients.map(client => (
                     <SelectItem key={client} value={client}>{client}</SelectItem>
                   ))}
@@ -238,7 +238,7 @@ const Projects = () => {
                   <SelectValue placeholder="Responsável" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos os Responsáveis</SelectItem>
+                  <SelectItem value="all">Todos os Responsáveis</SelectItem>
                   {uniqueResponsibles.map(responsible => (
                     <SelectItem key={responsible} value={responsible}>{responsible}</SelectItem>
                   ))}
@@ -247,7 +247,7 @@ const Projects = () => {
 
               <Button 
                 variant="outline" 
-                onClick={() => setFilters({ status: 'all', client: '', responsible: '' })}
+                onClick={() => setFilters({ status: 'all', client: 'all', responsible: 'all' })}
               >
                 Limpar Filtros
               </Button>

@@ -88,6 +88,14 @@ const Index = () => {
               Projetos
             </Button>
             <Button 
+              onClick={() => navigate('/flut')}
+              variant="outline"
+              className="shadow-lg transition-all duration-300 hover:shadow-xl"
+            >
+              <Calendar className="w-4 h-4 mr-2" />
+              FLUT
+            </Button>
+            <Button 
               onClick={() => setShowExpenseForm(true)}
               className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg transition-all duration-300 hover:shadow-xl"
             >

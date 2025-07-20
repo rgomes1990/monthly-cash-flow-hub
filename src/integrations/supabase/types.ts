@@ -79,6 +79,36 @@ export type Database = {
           },
         ]
       }
+      flut_subscriptions: {
+        Row: {
+          client_name: string
+          created_at: string
+          id: string
+          month_year: string
+          monthly_value: number
+          paid: boolean
+          updated_at: string
+        }
+        Insert: {
+          client_name: string
+          created_at?: string
+          id?: string
+          month_year: string
+          monthly_value: number
+          paid?: boolean
+          updated_at?: string
+        }
+        Update: {
+          client_name?: string
+          created_at?: string
+          id?: string
+          month_year?: string
+          monthly_value?: number
+          paid?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       project_documents: {
         Row: {
           file_path: string

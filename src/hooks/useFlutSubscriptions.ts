@@ -7,7 +7,6 @@ export interface FlutSubscription {
   client_name: string;
   monthly_value: number;
   month_year: string;
-  paid: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -40,18 +39,32 @@ export const useFlutSubscriptions = () => {
 
   const createSubscription = async (subscriptionData: Omit<FlutSubscription, 'id' | 'created_at' | 'updated_at'>) => {
     try {
+      // Criar mensalidades recorrentes - 12 meses a partir do mês especificado
+      const startDate = new Date(subscriptionData.month_year);
+      const subscriptions = [];
+      
+      for (let i = 0; i < 12; i++) {
+        const monthDate = new Date(startDate.getFullYear(), startDate.getMonth() + i, 1);
+        const monthYearString = monthDate.toISOString().split('T')[0];
+        
+        subscriptions.push({
+          ...subscriptionData,
+          month_year: monthYearString
+        });
+      }
+
       const { data, error } = await supabase
         .from("flut_subscriptions")
-        .insert([subscriptionData])
-        .select()
-        .single();
+        .insert(subscriptions)
+        .select();
 
       if (error) throw error;
 
-      setSubscriptions(prev => [data, ...prev]);
+      // Atualizar estado local
+      await fetchSubscriptions();
       toast({
         title: "Sucesso",
-        description: "Mensalidade criada com sucesso",
+        description: "Mensalidades criadas com sucesso para 12 meses",
       });
 
       return data;
@@ -98,19 +111,21 @@ export const useFlutSubscriptions = () => {
     }
   };
 
-  const deleteSubscription = async (id: string) => {
+  const deleteSubscription = async (clientName: string, startMonth: string) => {
     try {
+      // Deletar todas as mensalidades do cliente a partir do mês especificado
       const { error } = await supabase
         .from("flut_subscriptions")
         .delete()
-        .eq("id", id);
+        .eq("client_name", clientName)
+        .gte("month_year", startMonth);
 
       if (error) throw error;
 
-      setSubscriptions(prev => prev.filter(sub => sub.id !== id));
+      await fetchSubscriptions();
       toast({
         title: "Sucesso",
-        description: "Mensalidade excluída com sucesso",
+        description: "Mensalidades excluídas com sucesso",
       });
     } catch (error) {
       console.error("Erro ao excluir mensalidade:", error);

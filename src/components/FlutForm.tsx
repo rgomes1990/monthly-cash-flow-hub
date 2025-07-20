@@ -32,7 +32,6 @@ export const FlutForm = ({ onClose, defaultMonth = new Date(), subscription }: F
         client_name: clientName,
         monthly_value: parseFloat(monthlyValue),
         month_year: `${monthYear}-01`, // Always first day of month
-        paid: subscription?.paid || false,
       };
 
       if (subscription) {

@@ -23,10 +23,6 @@ const Flut = () => {
 
   // Calculate statistics
   const totalValue = currentMonthSubscriptions.reduce((sum, sub) => sum + Number(sub.monthly_value), 0);
-  const paidValue = currentMonthSubscriptions
-    .filter(sub => sub.paid)
-    .reduce((sum, sub) => sum + Number(sub.monthly_value), 0);
-  const pendingValue = totalValue - paidValue;
   const uniqueClients = new Set(currentMonthSubscriptions.map(sub => sub.client_name)).size;
 
   const navigateMonth = (direction: 'prev' | 'next') => {
@@ -77,7 +73,7 @@ const Flut = () => {
         </Card>
 
         {/* Statistics */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total do Mês</CardTitle>
@@ -86,30 +82,6 @@ const Flut = () => {
             <CardContent>
               <div className="text-2xl font-bold">
                 R$ {totalValue.toFixed(2)}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Recebido</CardTitle>
-              <Badge variant="default" className="bg-green-500">Pago</Badge>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-600">
-                R$ {paidValue.toFixed(2)}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Pendente</CardTitle>
-              <Badge variant="destructive">Pendente</Badge>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-red-600">
-                R$ {pendingValue.toFixed(2)}
               </div>
             </CardContent>
           </Card>

@@ -40,9 +40,11 @@ export const useFlutSubscriptions = () => {
   const createSubscription = async (subscriptionData: Omit<FlutSubscription, 'id' | 'created_at' | 'updated_at'>) => {
     try {
       // Criar mensalidades recorrentes - 12 meses a partir do mês especificado
-      const inputDate = new Date(subscriptionData.month_year);
-      const startYear = inputDate.getFullYear();
-      const startMonth = inputDate.getMonth() + 1; // getMonth() retorna 0-11, então +1
+      // Usar parsing manual da data para evitar problemas de timezone
+      const dateStr = subscriptionData.month_year;
+      const [year, month] = dateStr.split('-').map(Number);
+      const startYear = year;
+      const startMonth = month;
       const subscriptions = [];
       
       for (let i = 0; i < 12; i++) {
@@ -62,6 +64,9 @@ export const useFlutSubscriptions = () => {
         .select();
 
       if (error) throw error;
+
+      // Atualizar lista imediatamente após inserção
+      await fetchSubscriptions();
 
       toast({
         title: "Sucesso",
@@ -123,7 +128,9 @@ export const useFlutSubscriptions = () => {
 
       if (error) throw error;
 
-      // Não precisa fazer fetchSubscriptions pois o real-time vai atualizar automaticamente
+      // Atualizar lista imediatamente após exclusão
+      await fetchSubscriptions();
+
       toast({
         title: "Sucesso",
         description: "Mensalidades excluídas com sucesso",

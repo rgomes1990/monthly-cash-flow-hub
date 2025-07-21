@@ -40,12 +40,13 @@ export const useFlutSubscriptions = () => {
   const createSubscription = async (subscriptionData: Omit<FlutSubscription, 'id' | 'created_at' | 'updated_at'>) => {
     try {
       // Criar mensalidades recorrentes - 12 meses a partir do mês especificado
-      const startDate = new Date(subscriptionData.month_year);
+      const [year, month] = subscriptionData.month_year.split('-').map(num => parseInt(num));
       const subscriptions = [];
       
       for (let i = 0; i < 12; i++) {
-        const monthDate = new Date(startDate.getFullYear(), startDate.getMonth() + i, 1);
-        const monthYearString = monthDate.toISOString().split('T')[0];
+        const currentYear = year + Math.floor((month - 1 + i) / 12);
+        const currentMonth = ((month - 1 + i) % 12) + 1;
+        const monthYearString = `${currentYear}-${currentMonth.toString().padStart(2, '0')}-01`;
         
         subscriptions.push({
           ...subscriptionData,

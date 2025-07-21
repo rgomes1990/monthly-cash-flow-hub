@@ -40,17 +40,24 @@ export const useFlutSubscriptions = () => {
   const createSubscription = async (subscriptionData: Omit<FlutSubscription, 'id' | 'created_at' | 'updated_at'>) => {
     try {
       // Criar mensalidades recorrentes - 12 meses a partir do mês especificado
-      // Usar parsing manual da data para evitar problemas de timezone
+      console.log('Data recebida:', subscriptionData.month_year);
+      
+      // A data já vem no formato "2024-05-01", então vamos extrair ano e mês diretamente
       const dateStr = subscriptionData.month_year;
-      const [year, month] = dateStr.split('-').map(Number);
+      const [year, month, day] = dateStr.split('-').map(Number);
       const startYear = year;
       const startMonth = month;
+      
+      console.log('Ano:', startYear, 'Mês:', startMonth);
+      
       const subscriptions = [];
       
       for (let i = 0; i < 12; i++) {
         const currentYear = startYear + Math.floor((startMonth - 1 + i) / 12);
         const currentMonth = ((startMonth - 1 + i) % 12) + 1;
         const monthYearString = `${currentYear}-${currentMonth.toString().padStart(2, '0')}-01`;
+        
+        console.log(`Mês ${i + 1}: ${monthYearString}`);
         
         subscriptions.push({
           ...subscriptionData,

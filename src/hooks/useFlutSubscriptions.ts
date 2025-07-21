@@ -158,8 +158,9 @@ export const useFlutSubscriptions = () => {
       )
       .subscribe();
 
+    // Cleanup function para remover o canal
     return () => {
-      supabase.removeChannel(channel);
+      channel.unsubscribe();
     };
   }, []);
 

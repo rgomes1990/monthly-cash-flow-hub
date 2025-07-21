@@ -141,9 +141,10 @@ export const useFlutSubscriptions = () => {
   useEffect(() => {
     fetchSubscriptions();
     
-    // Configurar real-time updates
+    // Configurar real-time updates com nome único
+    const channelName = `flut_subscriptions_${Date.now()}`;
     const channel = supabase
-      .channel('flut_subscriptions_changes')
+      .channel(channelName)
       .on(
         'postgres_changes',
         {
@@ -160,7 +161,7 @@ export const useFlutSubscriptions = () => {
 
     // Cleanup function para remover o canal
     return () => {
-      channel.unsubscribe();
+      supabase.removeChannel(channel);
     };
   }, []);
 

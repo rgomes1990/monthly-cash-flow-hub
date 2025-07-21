@@ -142,9 +142,12 @@ export const useFlutSubscriptions = () => {
   useEffect(() => {
     fetchSubscriptions();
     
-    // Configurar real-time updates
+    // Configurar real-time updates com nome único baseado em timestamp e random
+    const uniqueId = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const channelName = `flut_subscriptions_${uniqueId}`;
+    
     const channel = supabase
-      .channel('flut_subscriptions_realtime')
+      .channel(channelName)
       .on(
         'postgres_changes',
         {
@@ -159,7 +162,9 @@ export const useFlutSubscriptions = () => {
         }
       )
       .subscribe((status) => {
-        console.log('Subscription status:', status);
+        if (status === 'SUBSCRIBED') {
+          console.log('Successfully subscribed to flut_subscriptions updates');
+        }
       });
 
     // Cleanup function para remover o canal

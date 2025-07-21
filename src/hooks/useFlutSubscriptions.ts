@@ -40,12 +40,14 @@ export const useFlutSubscriptions = () => {
   const createSubscription = async (subscriptionData: Omit<FlutSubscription, 'id' | 'created_at' | 'updated_at'>) => {
     try {
       // Criar mensalidades recorrentes - 12 meses a partir do mês especificado
-      const [year, month] = subscriptionData.month_year.split('-').map(num => parseInt(num));
+      const inputDate = new Date(subscriptionData.month_year);
+      const startYear = inputDate.getFullYear();
+      const startMonth = inputDate.getMonth() + 1; // getMonth() retorna 0-11, então +1
       const subscriptions = [];
       
       for (let i = 0; i < 12; i++) {
-        const currentYear = year + Math.floor((month - 1 + i) / 12);
-        const currentMonth = ((month - 1 + i) % 12) + 1;
+        const currentYear = startYear + Math.floor((startMonth - 1 + i) / 12);
+        const currentMonth = ((startMonth - 1 + i) % 12) + 1;
         const monthYearString = `${currentYear}-${currentMonth.toString().padStart(2, '0')}-01`;
         
         subscriptions.push({
@@ -61,7 +63,6 @@ export const useFlutSubscriptions = () => {
 
       if (error) throw error;
 
-      // Não precisa fazer fetchSubscriptions pois o real-time vai atualizar automaticamente
       toast({
         title: "Sucesso",
         description: "Mensalidades criadas com sucesso para 12 meses",
@@ -141,10 +142,9 @@ export const useFlutSubscriptions = () => {
   useEffect(() => {
     fetchSubscriptions();
     
-    // Configurar real-time updates com nome único
-    const channelName = `flut_subscriptions_${Date.now()}`;
+    // Configurar real-time updates
     const channel = supabase
-      .channel(channelName)
+      .channel('flut_subscriptions_realtime')
       .on(
         'postgres_changes',
         {
@@ -152,16 +152,19 @@ export const useFlutSubscriptions = () => {
           schema: 'public',
           table: 'flut_subscriptions'
         },
-        () => {
+        (payload) => {
+          console.log('Real-time update:', payload);
           // Atualizar a lista quando houver mudanças
           fetchSubscriptions();
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('Subscription status:', status);
+      });
 
     // Cleanup function para remover o canal
     return () => {
-      supabase.removeChannel(channel);
+      channel.unsubscribe();
     };
   }, []);
 

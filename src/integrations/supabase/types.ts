@@ -86,7 +86,6 @@ export type Database = {
           id: string
           month_year: string
           monthly_value: number
-          paid: boolean
           updated_at: string
         }
         Insert: {
@@ -95,7 +94,6 @@ export type Database = {
           id?: string
           month_year: string
           monthly_value: number
-          paid?: boolean
           updated_at?: string
         }
         Update: {
@@ -104,7 +102,6 @@ export type Database = {
           id?: string
           month_year?: string
           monthly_value?: number
-          paid?: boolean
           updated_at?: string
         }
         Relationships: []

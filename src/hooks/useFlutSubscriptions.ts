@@ -61,8 +61,7 @@ export const useFlutSubscriptions = () => {
 
       if (error) throw error;
 
-      // Atualizar estado local
-      await fetchSubscriptions();
+      // Não precisa fazer fetchSubscriptions pois o real-time vai atualizar automaticamente
       toast({
         title: "Sucesso",
         description: "Mensalidades criadas com sucesso para 12 meses",
@@ -123,7 +122,7 @@ export const useFlutSubscriptions = () => {
 
       if (error) throw error;
 
-      await fetchSubscriptions();
+      // Não precisa fazer fetchSubscriptions pois o real-time vai atualizar automaticamente
       toast({
         title: "Sucesso",
         description: "Mensalidades excluídas com sucesso",
@@ -141,6 +140,27 @@ export const useFlutSubscriptions = () => {
 
   useEffect(() => {
     fetchSubscriptions();
+    
+    // Configurar real-time updates
+    const channel = supabase
+      .channel('flut_subscriptions_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'flut_subscriptions'
+        },
+        () => {
+          // Atualizar a lista quando houver mudanças
+          fetchSubscriptions();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   return {

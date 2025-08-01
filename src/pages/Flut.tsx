@@ -30,21 +30,9 @@ const Flut = () => {
     .filter(sub => {
       const subDate = new Date(sub.month_year);
       const currentMonthDate = startOfMonth(currentMonth);
-      
-      console.log('Debug Cumulative Total:');
-      console.log('Subscription date:', sub.month_year, 'parsed:', subDate);
-      console.log('Current month date:', currentMonthDate);
-      console.log('Is subDate <= currentMonthDate?', subDate <= currentMonthDate);
-      
       return subDate <= currentMonthDate;
     })
-    .reduce((sum, sub) => {
-      console.log('Adding to cumulative:', sub.monthly_value);
-      return sum + Number(sub.monthly_value);
-    }, 0);
-
-  console.log('Final cumulative total:', cumulativeTotal);
-  console.log('All subscriptions:', subscriptions.length);
+    .reduce((sum, sub) => sum + Number(sub.monthly_value), 0);
 
   const navigateMonth = (direction: 'prev' | 'next') => {
     setCurrentMonth(prev => 

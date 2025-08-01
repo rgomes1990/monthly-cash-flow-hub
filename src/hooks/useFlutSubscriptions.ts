@@ -41,10 +41,11 @@ export const useFlutSubscriptions = () => {
     try {
       console.log('Data recebida:', subscriptionData.month_year);
       
-      // Usar Date para garantir que não há problemas de timezone
-      const startDate = new Date(subscriptionData.month_year + 'T00:00:00');
-      const startYear = startDate.getFullYear();
-      const startMonth = startDate.getMonth() + 1; // getMonth() retorna 0-11, então +1
+      // A data vem no formato "2024-05-01", vamos extrair ano e mês diretamente da string
+      const dateStr = subscriptionData.month_year; // Ex: "2024-05-01"
+      const [yearStr, monthStr] = dateStr.split('-');
+      const startYear = parseInt(yearStr);
+      const startMonth = parseInt(monthStr);
       
       console.log('Ano extraído:', startYear, 'Mês extraído:', startMonth);
       

@@ -53,8 +53,10 @@ export const useFlutSubscriptions = () => {
       
       // Criar 12 mensalidades a partir do mês selecionado
       for (let i = 0; i < 12; i++) {
-        const currentDate = new Date(startYear, startMonth - 1 + i, 1); // mês 0-11 no constructor
-        const monthYearString = `${currentDate.getFullYear()}-${(currentDate.getMonth() + 1).toString().padStart(2, '0')}-01`;
+        // Calcular o ano e mês corretamente
+        const currentYear = startYear + Math.floor((startMonth - 1 + i) / 12);
+        const currentMonth = ((startMonth - 1 + i) % 12) + 1;
+        const monthYearString = `${currentYear}-${currentMonth.toString().padStart(2, '0')}-01`;
         
         console.log(`Mensalidade ${i + 1}: ${monthYearString}`);
         

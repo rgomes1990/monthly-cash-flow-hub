@@ -16,9 +16,13 @@ const Flut = () => {
 
   // Filter subscriptions for current month
   const currentMonthSubscriptions = subscriptions.filter(sub => {
-    const subMonth = startOfMonth(new Date(sub.month_year));
-    const displayMonth = startOfMonth(currentMonth);
-    return subMonth.getTime() === displayMonth.getTime();
+    // Parse date directly from YYYY-MM-DD format to avoid timezone issues
+    const [year, month] = sub.month_year.split('-').map(Number);
+    const subYear = year;
+    const subMonth = month;
+    const displayYear = currentMonth.getFullYear();
+    const displayMonth = currentMonth.getMonth() + 1; // getMonth() returns 0-11
+    return subYear === displayYear && subMonth === displayMonth;
   });
 
   // Calculate statistics
@@ -28,9 +32,13 @@ const Flut = () => {
   // Calculate cumulative total (current month + all previous months)
   const cumulativeTotal = subscriptions
     .filter(sub => {
-      const subDate = new Date(sub.month_year);
-      const currentMonthDate = startOfMonth(currentMonth);
-      return subDate <= currentMonthDate;
+      // Parse date directly from YYYY-MM-DD format to avoid timezone issues
+      const [subYear, subMonth] = sub.month_year.split('-').map(Number);
+      const displayYear = currentMonth.getFullYear();
+      const displayMonth = currentMonth.getMonth() + 1; // getMonth() returns 0-11
+      
+      // Include if year is less than current year, or same year but month is less than or equal to current month
+      return subYear < displayYear || (subYear === displayYear && subMonth <= displayMonth);
     })
     .reduce((sum, sub) => sum + Number(sub.monthly_value), 0);
 

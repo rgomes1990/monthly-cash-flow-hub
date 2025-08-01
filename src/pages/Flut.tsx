@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Calendar, DollarSign, Users } from "lucide-react";
+import { Plus, Calendar, DollarSign, Users, TrendingUp } from "lucide-react";
 import { FlutForm } from "@/components/FlutForm";
 import { FlutCard } from "@/components/FlutCard";
 import { useFlutSubscriptions } from "@/hooks/useFlutSubscriptions";
@@ -24,6 +24,15 @@ const Flut = () => {
   // Calculate statistics
   const totalValue = currentMonthSubscriptions.reduce((sum, sub) => sum + Number(sub.monthly_value), 0);
   const uniqueClients = new Set(currentMonthSubscriptions.map(sub => sub.client_name)).size;
+
+  // Calculate cumulative total (current month + all previous months)
+  const cumulativeTotal = subscriptions
+    .filter(sub => {
+      const subDate = new Date(sub.month_year);
+      const currentMonthDate = startOfMonth(currentMonth);
+      return subDate <= currentMonthDate;
+    })
+    .reduce((sum, sub) => sum + Number(sub.monthly_value), 0);
 
   const navigateMonth = (direction: 'prev' | 'next') => {
     setCurrentMonth(prev => 
@@ -73,7 +82,7 @@ const Flut = () => {
         </Card>
 
         {/* Statistics */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total do Mês</CardTitle>
@@ -95,6 +104,21 @@ const Flut = () => {
               <div className="text-2xl font-bold">
                 {uniqueClients}
               </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Acumulado</CardTitle>
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                R$ {cumulativeTotal.toFixed(2)}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Até {format(currentMonth, "MMMM 'de' yyyy", { locale: ptBR })}
+              </p>
             </CardContent>
           </Card>
         </div>

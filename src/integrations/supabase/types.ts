@@ -79,6 +79,33 @@ export type Database = {
           },
         ]
       }
+      flix_subscriptions: {
+        Row: {
+          client_name: string
+          created_at: string
+          id: string
+          month_year: string
+          monthly_value: number
+          updated_at: string
+        }
+        Insert: {
+          client_name: string
+          created_at?: string
+          id?: string
+          month_year: string
+          monthly_value: number
+          updated_at?: string
+        }
+        Update: {
+          client_name?: string
+          created_at?: string
+          id?: string
+          month_year?: string
+          monthly_value?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       flut_subscriptions: {
         Row: {
           client_name: string

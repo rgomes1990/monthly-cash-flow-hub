@@ -125,6 +125,14 @@ const Projects = () => {
               FLUT
             </Button>
             <Button 
+              onClick={() => navigate('/flix')}
+              variant="outline"
+              className="shadow-lg transition-all duration-300 hover:shadow-xl"
+            >
+              <TrendingUp className="w-4 h-4 mr-2" />
+              FLIX
+            </Button>
+            <Button 
               onClick={() => {
                 setEditingProject(null);
                 setShowProjectForm(true);

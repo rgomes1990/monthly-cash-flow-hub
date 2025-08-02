@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Plus, Building2, User, Calendar, DollarSign, FileText, Filter } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Plus, Building2, User, Calendar, DollarSign, FileText, Filter, Home, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -11,6 +12,7 @@ import ProjectCard from '@/components/ProjectCard';
 import { useProjects } from '@/hooks/useProjects';
 
 const Projects = () => {
+  const navigate = useNavigate();
   const [showProjectForm, setShowProjectForm] = useState(false);
   const [editingProject, setEditingProject] = useState(null);
   const [filters, setFilters] = useState({
@@ -105,16 +107,34 @@ const Projects = () => {
               Gerencie orçamentos de projetos e acompanhe aprovações
             </p>
           </div>
-          <Button 
-            onClick={() => {
-              setEditingProject(null);
-              setShowProjectForm(true);
-            }}
-            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg transition-all duration-300 hover:shadow-xl"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Novo Projeto
-          </Button>
+          <div className="flex gap-3">
+            <Button 
+              onClick={() => navigate('/')}
+              variant="outline"
+              className="shadow-lg transition-all duration-300 hover:shadow-xl"
+            >
+              <Home className="w-4 h-4 mr-2" />
+              Despesas
+            </Button>
+            <Button 
+              onClick={() => navigate('/flut')}
+              variant="outline"
+              className="shadow-lg transition-all duration-300 hover:shadow-xl"
+            >
+              <TrendingUp className="w-4 h-4 mr-2" />
+              FLUT
+            </Button>
+            <Button 
+              onClick={() => {
+                setEditingProject(null);
+                setShowProjectForm(true);
+              }}
+              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg transition-all duration-300 hover:shadow-xl"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Novo Projeto
+            </Button>
+          </div>
         </div>
 
         {/* Statistics Cards */}

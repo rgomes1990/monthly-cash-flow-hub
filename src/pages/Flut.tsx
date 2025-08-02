@@ -1,8 +1,9 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Calendar, DollarSign, Users, TrendingUp } from "lucide-react";
+import { Plus, Calendar, DollarSign, Users, TrendingUp, Home, Building2 } from "lucide-react";
 import { FlutForm } from "@/components/FlutForm";
 import { FlutCard } from "@/components/FlutCard";
 import { useFlutSubscriptions } from "@/hooks/useFlutSubscriptions";
@@ -10,6 +11,7 @@ import { format, startOfMonth, addMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 const Flut = () => {
+  const navigate = useNavigate();
   const [showForm, setShowForm] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const { subscriptions, loading } = useFlutSubscriptions();
@@ -64,12 +66,40 @@ const Flut = () => {
     <div className="min-h-screen bg-gradient-to-br from-background to-muted/20 p-4">
       <div className="container mx-auto space-y-6">
         {/* Header */}
-        <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-bold text-foreground">FLUT - Controle de Mensalidades</h1>
-          <Button onClick={() => setShowForm(true)} className="gap-2">
-            <Plus className="h-4 w-4" />
-            Nova Mensalidade
-          </Button>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+          <div>
+            <h1 className="text-4xl font-bold text-gray-900 mb-2">
+              FLUT - Controle de Mensalidades
+            </h1>
+            <p className="text-gray-600">
+              Gerencie suas mensalidades de forma inteligente
+            </p>
+          </div>
+          <div className="flex gap-3">
+            <Button 
+              onClick={() => navigate('/')}
+              variant="outline"
+              className="shadow-lg transition-all duration-300 hover:shadow-xl"
+            >
+              <Home className="w-4 h-4 mr-2" />
+              Despesas
+            </Button>
+            <Button 
+              onClick={() => navigate('/projects')}
+              variant="outline"
+              className="shadow-lg transition-all duration-300 hover:shadow-xl"
+            >
+              <Building2 className="w-4 h-4 mr-2" />
+              Projetos
+            </Button>
+            <Button 
+              onClick={() => setShowForm(true)}
+              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg transition-all duration-300 hover:shadow-xl"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Nova Mensalidade
+            </Button>
+          </div>
         </div>
 
         {/* Month Navigator */}

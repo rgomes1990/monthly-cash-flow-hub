@@ -29,7 +29,7 @@ export const FlutCard = ({ subscription }: FlutCardProps) => {
     }
   };
 
-  const monthDate = new Date(subscription.month_year);
+  const monthDate = new Date(subscription.month_year + 'T12:00:00');
 
   return (
     <>

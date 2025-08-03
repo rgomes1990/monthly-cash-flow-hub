@@ -5,7 +5,7 @@ import { Home, TrendingUp, DollarSign } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { format, addMonths, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import MonthNavigatorEnhanced from "@/components/MonthNavigatorEnhanced";
+import MonthNavigator from "@/components/MonthNavigatorEnhanced";
 import { CashFlowForm } from "@/components/CashFlowForm";
 import { CashFlowCard } from "@/components/CashFlowCard";
 import { useCashFlow } from "@/hooks/useCashFlow";
@@ -75,7 +75,7 @@ const Resumo = () => {
         </div>
       </div>
 
-        <MonthNavigatorEnhanced
+        <MonthNavigator
           currentMonth={currentMonth}
           onMonthChange={setCurrentMonth}
         />

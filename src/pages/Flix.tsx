@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Users, DollarSign, Calendar, TrendingUp, Home, Building2 } from 'lucide-react';
+import { Plus, Users, DollarSign, Calendar, TrendingUp, Home, Building2, PieChart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -95,6 +95,14 @@ const Flix = () => {
             >
               <TrendingUp className="w-4 h-4 mr-2" />
               FLUT
+            </Button>
+            <Button 
+              onClick={() => navigate('/resumo')}
+              variant="outline"
+              className="shadow-lg transition-all duration-300 hover:shadow-xl"
+            >
+              <PieChart className="w-4 h-4 mr-2" />
+              RESUMO
             </Button>
             <Button 
               onClick={() => setShowForm(true)}

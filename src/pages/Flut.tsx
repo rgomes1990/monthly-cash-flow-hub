@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Calendar, DollarSign, Users, TrendingUp, Home, Building2 } from "lucide-react";
+import { Plus, Calendar, DollarSign, Users, TrendingUp, Home, Building2, PieChart } from "lucide-react";
 import { FlutForm } from "@/components/FlutForm";
 import { FlutCard } from "@/components/FlutCard";
 import { useFlutSubscriptions } from "@/hooks/useFlutSubscriptions";
@@ -99,6 +99,14 @@ const Flut = () => {
             >
               <TrendingUp className="w-4 h-4 mr-2" />
               FLIX
+            </Button>
+            <Button 
+              onClick={() => navigate('/resumo')}
+              variant="outline"
+              className="shadow-lg transition-all duration-300 hover:shadow-xl"
+            >
+              <PieChart className="w-4 h-4 mr-2" />
+              RESUMO
             </Button>
             <Button 
               onClick={() => setShowForm(true)}

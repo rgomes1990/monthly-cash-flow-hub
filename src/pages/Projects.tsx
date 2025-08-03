@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Building2, User, Calendar, DollarSign, FileText, Filter, Home, TrendingUp } from 'lucide-react';
+import { Plus, Building2, User, Calendar, DollarSign, FileText, Filter, Home, TrendingUp, PieChart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -131,6 +131,14 @@ const Projects = () => {
             >
               <TrendingUp className="w-4 h-4 mr-2" />
               FLIX
+            </Button>
+            <Button 
+              onClick={() => navigate('/resumo')}
+              variant="outline"
+              className="shadow-lg transition-all duration-300 hover:shadow-xl"
+            >
+              <PieChart className="w-4 h-4 mr-2" />
+              RESUMO
             </Button>
             <Button 
               onClick={() => {

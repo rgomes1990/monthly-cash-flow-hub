@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Plus, Calendar, TrendingUp, TrendingDown, DollarSign, Building2 } from 'lucide-react';
+import { Plus, Calendar, TrendingUp, TrendingDown, DollarSign, Building2, PieChart } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -102,6 +102,14 @@ const Index = () => {
             >
               <TrendingUp className="w-4 h-4 mr-2" />
               FLIX
+            </Button>
+            <Button 
+              onClick={() => navigate('/resumo')}
+              variant="outline"
+              className="shadow-lg transition-all duration-300 hover:shadow-xl"
+            >
+              <PieChart className="w-4 h-4 mr-2" />
+              RESUMO
             </Button>
             <Button 
               onClick={() => setShowExpenseForm(true)}

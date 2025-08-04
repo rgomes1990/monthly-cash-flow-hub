@@ -11,6 +11,7 @@ interface CashFlowFormProps {
   onSubmit: (entry: {
     type: 'entrada' | 'saida';
     amount: number;
+    title: string;
     description: string;
     date: string;
     month_year: string;
@@ -21,25 +22,28 @@ interface CashFlowFormProps {
 export const CashFlowForm = ({ onSubmit, currentMonth }: CashFlowFormProps) => {
   const [type, setType] = useState<'entrada' | 'saida'>('entrada');
   const [amount, setAmount] = useState("");
+  const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'));
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!amount || !description) {
+    if (!amount || !title || !description) {
       return;
     }
 
     onSubmit({
       type,
       amount: parseFloat(amount),
+      title,
       description,
       date,
       month_year: format(currentMonth, 'yyyy-MM-01')
     });
 
     setAmount("");
+    setTitle("");
     setDescription("");
     setDate(format(new Date(), 'yyyy-MM-dd'));
   };
@@ -73,6 +77,17 @@ export const CashFlowForm = ({ onSubmit, currentMonth }: CashFlowFormProps) => {
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               placeholder="0,00"
+              required
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="title">Título</Label>
+            <Input
+              id="title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Título do lançamento"
               required
             />
           </div>

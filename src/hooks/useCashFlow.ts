@@ -6,6 +6,7 @@ export interface CashFlowEntry {
   id: string;
   type: 'entrada' | 'saida';
   amount: number;
+  title: string;
   description: string;
   date: string;
   month_year: string;

@@ -18,6 +18,7 @@ export const CashFlowEditForm = ({ entry, onSave, onCancel }: CashFlowEditFormPr
   const [formData, setFormData] = useState({
     type: entry.type,
     amount: entry.amount.toString(),
+    title: entry.title,
     description: entry.description,
     date: format(new Date(entry.date), 'yyyy-MM-dd')
   });
@@ -28,6 +29,7 @@ export const CashFlowEditForm = ({ entry, onSave, onCancel }: CashFlowEditFormPr
     const updates: Partial<CashFlowEntry> = {
       type: formData.type as 'entrada' | 'saida',
       amount: Number(formData.amount),
+      title: formData.title,
       description: formData.description,
       date: formData.date,
       month_year: format(new Date(formData.date), 'yyyy-MM-01')
@@ -68,6 +70,17 @@ export const CashFlowEditForm = ({ entry, onSave, onCancel }: CashFlowEditFormPr
               value={formData.amount}
               onChange={(e) => setFormData(prev => ({ ...prev, amount: e.target.value }))}
               placeholder="0,00"
+              required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="edit-title">Título</Label>
+            <Input
+              id="edit-title"
+              value={formData.title}
+              onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+              placeholder="Título do lançamento"
               required
             />
           </div>

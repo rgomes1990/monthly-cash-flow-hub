@@ -24,8 +24,11 @@ export const CashFlowCard = ({ entry, onDelete, onEdit }: CashFlowCardProps) => 
     <Card className="w-full">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <div>
-          <CardTitle className="text-base">{entry.description}</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-base">{entry.title}</CardTitle>
+          <CardDescription className="text-sm">
+            {entry.description}
+          </CardDescription>
+          <CardDescription className="text-xs">
             {format(new Date(entry.date), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
           </CardDescription>
         </div>

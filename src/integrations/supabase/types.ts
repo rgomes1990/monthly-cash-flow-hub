@@ -22,6 +22,7 @@ export type Database = {
           description: string
           id: string
           month_year: string
+          title: string
           type: string
           updated_at: string
         }
@@ -32,6 +33,7 @@ export type Database = {
           description: string
           id?: string
           month_year?: string
+          title?: string
           type: string
           updated_at?: string
         }
@@ -42,6 +44,7 @@ export type Database = {
           description?: string
           id?: string
           month_year?: string
+          title?: string
           type?: string
           updated_at?: string
         }

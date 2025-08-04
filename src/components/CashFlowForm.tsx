@@ -29,7 +29,7 @@ export const CashFlowForm = ({ onSubmit, currentMonth }: CashFlowFormProps) => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!amount || !title || !description) {
+    if (!amount || !title) {
       return;
     }
 
@@ -99,7 +99,6 @@ export const CashFlowForm = ({ onSubmit, currentMonth }: CashFlowFormProps) => {
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Descrição do lançamento"
-              required
             />
           </div>
 

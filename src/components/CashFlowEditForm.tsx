@@ -92,7 +92,6 @@ export const CashFlowEditForm = ({ entry, onSave, onCancel }: CashFlowEditFormPr
               value={formData.description}
               onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
               placeholder="Descrição do lançamento"
-              required
             />
           </div>
 

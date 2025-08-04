@@ -78,7 +78,7 @@ const Flix = () => {
               className="shadow-lg transition-all duration-300 hover:shadow-xl"
             >
               <Home className="w-4 h-4 mr-2" />
-              Despesas
+              DESPESAS
             </Button>
             <Button 
               onClick={() => navigate('/projects')}
@@ -86,7 +86,7 @@ const Flix = () => {
               className="shadow-lg transition-all duration-300 hover:shadow-xl"
             >
               <Building2 className="w-4 h-4 mr-2" />
-              Projetos
+              PROJETOS
             </Button>
             <Button 
               onClick={() => navigate('/flut')}

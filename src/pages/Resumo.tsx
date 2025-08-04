@@ -8,12 +8,15 @@ import { ptBR } from "date-fns/locale";
 import MonthNavigator from "@/components/MonthNavigatorEnhanced";
 import { CashFlowForm } from "@/components/CashFlowForm";
 import { CashFlowCard } from "@/components/CashFlowCard";
-import { useCashFlow } from "@/hooks/useCashFlow";
+import { CashFlowEditForm } from "@/components/CashFlowEditForm";
+import { useCashFlow, CashFlowEntry } from "@/hooks/useCashFlow";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const Resumo = () => {
   const navigate = useNavigate();
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  const { entries, loading, fetchEntries, addEntry, deleteEntry, getBalance } = useCashFlow();
+  const [editingEntry, setEditingEntry] = useState<CashFlowEntry | null>(null);
+  const { entries, loading, fetchEntries, addEntry, updateEntry, deleteEntry, getBalance } = useCashFlow();
 
   useEffect(() => {
     const monthYear = format(currentMonth, 'yyyy-MM-01');
@@ -26,6 +29,19 @@ const Resumo = () => {
 
   const handleNextMonth = () => {
     setCurrentMonth(prev => addMonths(prev, 1));
+  };
+
+  const handleEditEntry = (entry: CashFlowEntry) => {
+    setEditingEntry(entry);
+  };
+
+  const handleSaveEdit = (id: string, updates: Partial<CashFlowEntry>) => {
+    updateEntry(id, updates);
+    setEditingEntry(null);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingEntry(null);
   };
 
   const formatCurrency = (value: number) => {
@@ -54,7 +70,7 @@ const Resumo = () => {
             className="flex items-center gap-2"
           >
             <Home className="h-4 w-4" />
-            Despesas
+            DESPESAS
           </Button>
           <Button
             variant="outline"
@@ -143,12 +159,28 @@ const Resumo = () => {
                   key={entry.id}
                   entry={entry}
                   onDelete={deleteEntry}
+                  onEdit={handleEditEntry}
                 />
               ))}
             </div>
           )}
         </div>
       </div>
+
+      <Dialog open={!!editingEntry} onOpenChange={() => setEditingEntry(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Editar Lançamento</DialogTitle>
+          </DialogHeader>
+          {editingEntry && (
+            <CashFlowEditForm
+              entry={editingEntry}
+              onSave={handleSaveEdit}
+              onCancel={handleCancelEdit}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

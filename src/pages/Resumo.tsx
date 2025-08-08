@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Home, TrendingUp, DollarSign } from "lucide-react";
+import { Home, TrendingUp, DollarSign, Briefcase } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { format, addMonths, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -71,6 +71,14 @@ const Resumo = () => {
           >
             <Home className="h-4 w-4" />
             DESPESAS
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => navigate("/projects")}
+            className="flex items-center gap-2"
+          >
+            <Briefcase className="h-4 w-4" />
+            PROJETOS
           </Button>
           <Button
             variant="outline"

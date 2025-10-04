@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, Edit } from "lucide-react";
+import { Trash2, Edit, Copy } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { CashFlowEntry } from "@/hooks/useCashFlow";
@@ -10,9 +10,10 @@ interface CashFlowCardProps {
   entry: CashFlowEntry;
   onDelete: (id: string) => void;
   onEdit?: (entry: CashFlowEntry) => void;
+  onDuplicate?: (entry: CashFlowEntry) => void;
 }
 
-export const CashFlowCard = ({ entry, onDelete, onEdit }: CashFlowCardProps) => {
+export const CashFlowCard = ({ entry, onDelete, onEdit, onDuplicate }: CashFlowCardProps) => {
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
@@ -53,6 +54,15 @@ export const CashFlowCard = ({ entry, onDelete, onEdit }: CashFlowCardProps) => 
                 onClick={() => onEdit(entry)}
               >
                 <Edit className="h-4 w-4" />
+              </Button>
+            )}
+            {onDuplicate && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onDuplicate(entry)}
+              >
+                <Copy className="h-4 w-4" />
               </Button>
             )}
             <Button

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { format } from "date-fns";
 
 export interface CashFlowEntry {
   id: string;
@@ -110,6 +111,40 @@ export const useCashFlow = () => {
     }
   };
 
+  const duplicateEntryToNextMonth = async (entry: CashFlowEntry) => {
+    try {
+      const currentDate = new Date(entry.date);
+      const nextMonthDate = new Date(currentDate.setMonth(currentDate.getMonth() + 1));
+      const nextMonthYear = format(nextMonthDate, 'yyyy-MM-01');
+
+      const newEntry = {
+        type: entry.type,
+        amount: entry.amount,
+        title: entry.title,
+        description: entry.description,
+        date: format(nextMonthDate, 'yyyy-MM-dd'),
+        month_year: nextMonthYear
+      };
+
+      const { data, error } = await supabase
+        .from("cash_flow")
+        .insert([newEntry])
+        .select()
+        .single();
+
+      if (error) {
+        console.error("Erro ao duplicar lançamento:", error);
+        toast.error("Erro ao duplicar lançamento");
+        return;
+      }
+
+      toast.success("Lançamento duplicado para o próximo mês!");
+    } catch (error) {
+      console.error("Erro ao duplicar lançamento:", error);
+      toast.error("Erro ao duplicar lançamento");
+    }
+  };
+
   const getBalance = () => {
     const entradas = entries
       .filter(entry => entry.type === 'entrada')
@@ -129,6 +164,7 @@ export const useCashFlow = () => {
     addEntry,
     updateEntry,
     deleteEntry,
+    duplicateEntryToNextMonth,
     getBalance
   };
 };

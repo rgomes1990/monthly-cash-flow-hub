@@ -16,7 +16,7 @@ const Resumo = () => {
   const navigate = useNavigate();
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [editingEntry, setEditingEntry] = useState<CashFlowEntry | null>(null);
-  const { entries, loading, fetchEntries, addEntry, updateEntry, deleteEntry, getBalance } = useCashFlow();
+  const { entries, loading, fetchEntries, addEntry, updateEntry, deleteEntry, duplicateEntryToNextMonth, getBalance } = useCashFlow();
 
   useEffect(() => {
     const monthYear = format(currentMonth, 'yyyy-MM-01');
@@ -168,6 +168,7 @@ const Resumo = () => {
                   entry={entry}
                   onDelete={deleteEntry}
                   onEdit={handleEditEntry}
+                  onDuplicate={duplicateEntryToNextMonth}
                 />
               ))}
             </div>

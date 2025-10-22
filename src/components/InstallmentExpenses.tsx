@@ -6,6 +6,16 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import ExpenseEditForm from '@/components/ExpenseEditForm';
 import { Expense } from '@/hooks/useExpenses';
 
@@ -23,6 +33,7 @@ const InstallmentExpenses: React.FC<InstallmentExpensesProps> = ({
   onReplicateToFuture 
 }) => {
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+  const [deletingExpenseId, setDeletingExpenseId] = useState<string | null>(null);
 
   const getCategoryColor = (category: string) => {
     const colors: { [key: string]: string } = {
@@ -57,6 +68,17 @@ const InstallmentExpenses: React.FC<InstallmentExpensesProps> = ({
   const handleReplicateToFuture = (id: string) => {
     if (onReplicateToFuture) {
       onReplicateToFuture(id);
+    }
+  };
+
+  const handleDeleteClick = (id: string) => {
+    setDeletingExpenseId(id);
+  };
+
+  const handleConfirmDelete = () => {
+    if (deletingExpenseId) {
+      onDelete(deletingExpenseId);
+      setDeletingExpenseId(null);
     }
   };
 
@@ -161,7 +183,7 @@ const InstallmentExpenses: React.FC<InstallmentExpensesProps> = ({
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => onDelete(expense.id)}
+                        onClick={() => handleDeleteClick(expense.id)}
                         className="text-red-600 hover:text-red-700"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -182,6 +204,23 @@ const InstallmentExpenses: React.FC<InstallmentExpensesProps> = ({
           onCancel={() => setEditingExpense(null)}
         />
       )}
+
+      <AlertDialog open={!!deletingExpenseId} onOpenChange={() => setDeletingExpenseId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir esta despesa? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmDelete} className="bg-red-600 hover:bg-red-700">
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

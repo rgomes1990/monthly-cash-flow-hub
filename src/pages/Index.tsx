@@ -156,18 +156,6 @@ const Index = () => {
                 <Label htmlFor="filter-company" className="text-base">Despesas da Empresa</Label>
               </div>
             </RadioGroup>
-            
-            {/* Search Field */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <Input
-                type="text"
-                placeholder="Buscar despesas por título, categoria ou descrição..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
-            </div>
           </CardContent>
         </Card>
 
@@ -238,6 +226,22 @@ const Index = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* Search Field */}
+        <Card className="mb-8">
+          <CardContent className="pt-6">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Input
+                type="text"
+                placeholder="Buscar despesas por título, categoria ou descrição..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Main Content */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">

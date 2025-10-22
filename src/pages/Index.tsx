@@ -1,9 +1,10 @@
 
-import React, { useState } from 'react';
-import { Plus, Calendar, TrendingUp, TrendingDown, DollarSign, Building2, PieChart } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { Plus, Calendar, TrendingUp, TrendingDown, DollarSign, Building2, PieChart, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
@@ -21,6 +22,7 @@ const Index = () => {
   const [showExpenseForm, setShowExpenseForm] = useState(false);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [expenseFilter, setExpenseFilter] = useState<'personal' | 'company'>('personal');
+  const [searchQuery, setSearchQuery] = useState('');
   
   const { 
     expenses, 
@@ -32,15 +34,28 @@ const Index = () => {
     replicateInstallmentExpenseToFuture 
   } = useExpenses(expenseFilter);
 
-  const currentMonthExpenses = expenses.filter(expense => {
-    const expenseDate = new Date(expense.date);
-    return expenseDate.getFullYear() === currentMonth.getFullYear() && 
-           expenseDate.getMonth() === currentMonth.getMonth();
-  });
+  const currentMonthExpenses = useMemo(() => {
+    return expenses.filter(expense => {
+      const expenseDate = new Date(expense.date);
+      return expenseDate.getFullYear() === currentMonth.getFullYear() && 
+             expenseDate.getMonth() === currentMonth.getMonth();
+    });
+  }, [expenses, currentMonth]);
 
-  const monthlyExpenses = currentMonthExpenses.filter(e => e.type === 'monthly');
-  const installmentExpenses = currentMonthExpenses.filter(e => e.type === 'installment');
-  const casualExpenses = currentMonthExpenses.filter(e => e.type === 'casual');
+  const filteredExpenses = useMemo(() => {
+    if (!searchQuery.trim()) return currentMonthExpenses;
+    
+    const query = searchQuery.toLowerCase();
+    return currentMonthExpenses.filter(expense => 
+      expense.title.toLowerCase().includes(query) ||
+      expense.category.toLowerCase().includes(query) ||
+      (expense.description && expense.description.toLowerCase().includes(query))
+    );
+  }, [currentMonthExpenses, searchQuery]);
+
+  const monthlyExpenses = filteredExpenses.filter(e => e.type === 'monthly');
+  const installmentExpenses = filteredExpenses.filter(e => e.type === 'installment');
+  const casualExpenses = filteredExpenses.filter(e => e.type === 'casual');
 
   const totalMonthly = monthlyExpenses.reduce((sum, e) => sum + e.amount, 0);
   const totalInstallment = installmentExpenses.reduce((sum, e) => sum + e.amount, 0);
@@ -126,7 +141,7 @@ const Index = () => {
           <CardHeader>
             <CardTitle className="text-lg">Filtrar Despesas</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
             <RadioGroup 
               value={expenseFilter} 
               onValueChange={(value: 'personal' | 'company') => setExpenseFilter(value)}
@@ -141,6 +156,18 @@ const Index = () => {
                 <Label htmlFor="filter-company" className="text-base">Despesas da Empresa</Label>
               </div>
             </RadioGroup>
+            
+            {/* Search Field */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Input
+                type="text"
+                placeholder="Buscar despesas por título, categoria ou descrição..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+            </div>
           </CardContent>
         </Card>
 

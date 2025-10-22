@@ -1,22 +1,13 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { ShoppingCart, Edit, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-
-interface Expense {
-  id: string;
-  title: string;
-  amount: number;
-  category: string;
-  type: 'monthly' | 'installment' | 'casual';
-  date: string;
-  description?: string;
-  paid?: boolean;
-}
+import ExpenseEditForm from '@/components/ExpenseEditForm';
+import { Expense } from '@/hooks/useExpenses';
 
 interface CasualExpensesProps {
   expenses: Expense[];
@@ -25,6 +16,7 @@ interface CasualExpensesProps {
 }
 
 const CasualExpenses: React.FC<CasualExpensesProps> = ({ expenses, onUpdate, onDelete }) => {
+  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const getCategoryColor = (category: string) => {
     const colors: { [key: string]: string } = {
       'Alimentação': 'bg-green-100 text-green-800',
@@ -44,6 +36,15 @@ const CasualExpenses: React.FC<CasualExpensesProps> = ({ expenses, onUpdate, onD
 
   const handlePaidToggle = (id: string, paid: boolean) => {
     onUpdate(id, { paid });
+  };
+
+  const handleEdit = (expense: Expense) => {
+    setEditingExpense(expense);
+  };
+
+  const handleSaveEdit = (id: string, updates: Partial<Expense>) => {
+    onUpdate(id, updates);
+    setEditingExpense(null);
   };
 
   return (
@@ -125,9 +126,7 @@ const CasualExpenses: React.FC<CasualExpensesProps> = ({ expenses, onUpdate, onD
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => {
-                          // Implementar edição
-                        }}
+                        onClick={() => handleEdit(expense)}
                       >
                         <Edit className="w-4 h-4" />
                       </Button>
@@ -146,6 +145,14 @@ const CasualExpenses: React.FC<CasualExpensesProps> = ({ expenses, onUpdate, onD
             </Card>
           ))}
         </div>
+      )}
+
+      {editingExpense && (
+        <ExpenseEditForm
+          expense={editingExpense}
+          onSave={handleSaveEdit}
+          onCancel={() => setEditingExpense(null)}
+        />
       )}
     </div>
   );

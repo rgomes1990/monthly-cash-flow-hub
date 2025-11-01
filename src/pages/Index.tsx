@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo } from 'react';
-import { Plus, Calendar, TrendingUp, TrendingDown, DollarSign, Building2, PieChart, Search } from 'lucide-react';
+import { Plus, Calendar, TrendingUp, TrendingDown, DollarSign, Building2, PieChart, Search, LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,9 +15,12 @@ import CasualExpenses from '@/components/CasualExpenses';
 import ExpenseChart from '@/components/ExpenseChart';
 import MonthNavigator from '@/components/MonthNavigatorEnhanced';
 import { useExpenses } from '@/hooks/useExpenses';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 const Index = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [showExpenseForm, setShowExpenseForm] = useState(false);
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -70,6 +73,22 @@ const Index = () => {
       recurring_day: expense.recurring_day,
     });
     setShowExpenseForm(false);
+  };
+
+  const handleLogout = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      toast({
+        title: "Erro ao sair",
+        description: error.message,
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Logout realizado",
+        description: "Você saiu do sistema com sucesso.",
+      });
+    }
   };
 
   if (loading) {
@@ -132,6 +151,14 @@ const Index = () => {
             >
               <Plus className="w-4 h-4 mr-2" />
               Nova Despesa
+            </Button>
+            <Button 
+              onClick={handleLogout}
+              variant="outline"
+              className="shadow-lg transition-all duration-300 hover:shadow-xl hover:bg-red-50"
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              Sair
             </Button>
           </div>
         </div>

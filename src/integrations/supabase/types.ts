@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
@@ -169,6 +169,27 @@ export type Database = {
         }
         Relationships: []
       }
+      profiles: {
+        Row: {
+          created_at: string
+          id: string
+          updated_at: string
+          username: string
+        }
+        Insert: {
+          created_at?: string
+          id: string
+          updated_at?: string
+          username: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          updated_at?: string
+          username?: string
+        }
+        Relationships: []
+      }
       project_documents: {
         Row: {
           file_path: string
@@ -254,10 +275,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      create_monthly_expenses: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      create_monthly_expenses: { Args: never; Returns: undefined }
     }
     Enums: {
       [_ in never]: never

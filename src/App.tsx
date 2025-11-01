@@ -9,7 +9,9 @@ import Projects from "./pages/Projects";
 import Flut from "./pages/Flut";
 import Flix from "./pages/Flix";
 import Resumo from "./pages/Resumo";
+import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient();
 
@@ -20,11 +22,12 @@ const App = () => (
       <Sonner />
       <HashRouter>
         <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/projects" element={<Projects />} />
-          <Route path="/flut" element={<Flut />} />
-          <Route path="/flix" element={<Flix />} />
-          <Route path="/resumo" element={<Resumo />} />
+          <Route path="/auth" element={<Auth />} />
+          <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+          <Route path="/projects" element={<ProtectedRoute><Projects /></ProtectedRoute>} />
+          <Route path="/flut" element={<ProtectedRoute><Flut /></ProtectedRoute>} />
+          <Route path="/flix" element={<ProtectedRoute><Flix /></ProtectedRoute>} />
+          <Route path="/resumo" element={<ProtectedRoute><Resumo /></ProtectedRoute>} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

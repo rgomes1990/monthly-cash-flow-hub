@@ -71,11 +71,33 @@ const Auth = () => {
           variant: "destructive",
         });
       } else {
-        toast({
-          title: "Erro ao fazer login",
-          description: error.message || "Usuário ou senha incorretos",
-          variant: "destructive",
-        });
+        const message = String(error?.message || '').toLowerCase();
+        if (message.includes('email not confirmed')) {
+          const confirmed = await confirmUser(loginData.username);
+          if (confirmed) {
+            const email = `${loginData.username}@sistema.app`;
+            const { data: retryData, error: retryError } = await supabase.auth.signInWithPassword({
+              email,
+              password: loginData.password,
+            });
+            if (!retryError && retryData?.user) {
+              toast({ title: 'Login realizado com sucesso!', description: 'Bem-vindo de volta.' });
+              navigate('/');
+              return;
+            }
+          }
+          toast({
+            title: 'Confirmação de email necessária',
+            description: 'Tentamos confirmar automaticamente. Tente novamente.',
+            variant: 'destructive',
+          });
+        } else {
+          toast({
+            title: 'Erro ao fazer login',
+            description: (error && (error.message || (error as any).error_description)) || 'Usuário ou senha incorretos',
+            variant: 'destructive',
+          });
+        }
       }
     } finally {
       setLoading(false);
@@ -107,6 +129,7 @@ const Auth = () => {
       if (error) throw error;
 
       if (data.user) {
+        await confirmUser(validated.username).catch(() => {});
         toast({
           title: "Cadastro realizado com sucesso!",
           description: "Você já pode fazer login.",
@@ -131,6 +154,17 @@ const Auth = () => {
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const confirmUser = async (username: string) => {
+    try {
+      const { error } = await supabase.functions.invoke('confirm-user', {
+        body: { username },
+      });
+      return !error;
+    } catch (e) {
+      return false;
     }
   };
 

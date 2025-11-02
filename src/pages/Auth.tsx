@@ -47,7 +47,7 @@ const Auth = () => {
       setLoading(true);
       
       // Convert username to email format
-      const email = `${validated.username}@sistema.local`;
+      const email = `${validated.username}@sistema.app`;
       
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -90,7 +90,7 @@ const Auth = () => {
       setLoading(true);
       
       // Convert username to email format
-      const email = `${validated.username}@sistema.local`;
+      const email = `${validated.username}@sistema.app`;
       const redirectUrl = `${window.location.origin}/#/`;
       
       const { data, error } = await supabase.auth.signUp({
